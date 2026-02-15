@@ -151,8 +151,8 @@ export default function GameScreen() {
                         </Pressable>
                     </View>
                 ) : (
-                    <ScreenRenderer
-                        level={level!}
+                    level && <ScreenRenderer
+                        level={level}
                         state={state}
                         progress={progress}
                         onTap={() => {

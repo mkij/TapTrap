@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { GameState, Level, INITIAL_MEMORY, ActionType } from "../engine/types";
 import { validateAction } from "../engine/rules";
 import { generateLevel } from "../engine/levels";
+import { getStageLevelDef, buildLevelFromStage, getTotalStageLevels } from "../engine/stages";
 import { calculateScore, calculateCombo } from "../engine/scoring";
 import { TIMER_TICK_MS, LEVEL_TRANSITION_MS } from "../constants/timing";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -45,13 +46,17 @@ export default function useGameLoop() {
     // Start a specific level
     const startLevel = useCallback(
         (levelNumber: number, currentState: GameState) => {
-            const newLevel = generateLevel(levelNumber, {
-                rememberedIcon: currentState.memory.icon,
-                recentRules: recentRulesRef.current,
-                recentCategories: recentCategoriesRef.current,
-            });
+            // Story mode: use stage definitions; Endless mode: random from catalog
+            const stageDef = getStageLevelDef(levelNumber);
+            const newLevel = stageDef
+                ? buildLevelFromStage(stageDef, levelNumber, currentState.memory.icon)
+                : generateLevel(levelNumber, {
+                    rememberedIcon: currentState.memory.icon,
+                    recentRules: recentRulesRef.current,
+                    recentCategories: recentCategoriesRef.current,
+                });
 
-            // Track history (keep last 3)
+            // Track history for endless mode anti-repeat
             recentRulesRef.current = [...recentRulesRef.current, newLevel.rule].slice(-3);
             recentCategoriesRef.current = [
                 ...recentCategoriesRef.current,
