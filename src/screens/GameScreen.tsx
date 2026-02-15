@@ -41,15 +41,35 @@ export default function GameScreen() {
 
     const shakeAnim = useRef(new Animated.Value(0)).current;
 
+    const shakeAnimY = useRef(new Animated.Value(0)).current;
+
     useEffect(() => {
         if (isFailed || isGameOver) {
-            Animated.sequence([
-                Animated.timing(shakeAnim, { toValue: 8, duration: 50, useNativeDriver: true }),
-                Animated.timing(shakeAnim, { toValue: -8, duration: 50, useNativeDriver: true }),
-                Animated.timing(shakeAnim, { toValue: 6, duration: 50, useNativeDriver: true }),
-                Animated.timing(shakeAnim, { toValue: -6, duration: 50, useNativeDriver: true }),
-                Animated.timing(shakeAnim, { toValue: 3, duration: 50, useNativeDriver: true }),
-                Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+            Animated.parallel([
+                Animated.sequence([
+                    Animated.timing(shakeAnim, { toValue: -8, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnim, { toValue: 6, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnim, { toValue: -10, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnim, { toValue: 4, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnim, { toValue: -6, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnim, { toValue: 8, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnim, { toValue: -4, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnim, { toValue: 3, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnim, { toValue: -2, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnim, { toValue: 0, duration: 40, useNativeDriver: true }),
+                ]),
+                Animated.sequence([
+                    Animated.timing(shakeAnimY, { toValue: 2, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnimY, { toValue: -4, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnimY, { toValue: 0, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnimY, { toValue: 4, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnimY, { toValue: -2, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnimY, { toValue: 0, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnimY, { toValue: 2, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnimY, { toValue: -3, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnimY, { toValue: 1, duration: 40, useNativeDriver: true }),
+                    Animated.timing(shakeAnimY, { toValue: 0, duration: 40, useNativeDriver: true }),
+                ]),
             ]).start();
         }
     }, [isFailed, isGameOver]);
@@ -96,7 +116,7 @@ export default function GameScreen() {
                 />
             )}
 
-            <Animated.View style={[styles.gameArea, { transform: [{ translateX: shakeAnim }] }]}>
+            <Animated.View style={[styles.gameArea, { transform: [{ translateX: shakeAnim }, { translateY: shakeAnimY }] }]}>
                 {isIdle ? (
                     <View style={styles.menuContainer}>
                         <Text style={styles.menuTitle}>TAP</Text>
@@ -174,9 +194,20 @@ export default function GameScreen() {
                         </View>
 
                         {isFailed && showContinue && (
-                            <Pressable style={styles.continueButtonAbsolute} onPress={continueGame}>
-                                <Text style={styles.continueButtonText}>CONTINUE</Text>
-                            </Pressable>
+                            <View style={styles.failButtonsAbsolute}>
+                                <Pressable style={styles.continueButton} onPress={continueGame}>
+                                    <Text style={styles.continueButtonText}>CONTINUE</Text>
+                                </Pressable>
+                                <View style={styles.failSecondaryRow}>
+                                    <Pressable style={styles.failSecondaryButton} onPress={startGame}>
+                                        <Text style={styles.failSecondaryText}>RETRY</Text>
+                                    </Pressable>
+                                    <View style={styles.failSecondaryDivider} />
+                                    <Pressable style={styles.failSecondaryButton} onPress={resetGame}>
+                                        <Text style={styles.failSecondaryText}>MENU</Text>
+                                    </Pressable>
+                                </View>
+                            </View>
                         )}
                     </View>
                 )}
@@ -218,7 +249,7 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     gearText: {
-        fontSize: 18,
+        fontSize: 24,
         color: "rgba(255,255,255,0.2)",
     },
     gameArea: {
@@ -362,20 +393,36 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255,51,85,0.2)",
         backgroundColor: "rgba(255,51,85,0.03)",
     },
-    continueButtonAbsolute: {
+    failButtonsAbsolute: {
         position: "absolute",
-        bottom: -80,
-        paddingVertical: 10,
-        paddingHorizontal: 36,
-        borderRadius: 8,
-        borderWidth: 1.5,
-        borderColor: "rgba(255,51,85,0.2)",
-        backgroundColor: "rgba(255,51,85,0.03)",
+        bottom: -100,
+        alignItems: "center",
+        gap: 12,
     },
     continueButtonText: {
         fontSize: 13,
         fontFamily: FONTS.bold,
         letterSpacing: 3,
         color: COLORS.danger,
+    },
+    failSecondaryRow: {
+        flexDirection: "row",
+        gap: 24,
+    },
+    failSecondaryButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 16,
+    },
+    failSecondaryText: {
+        fontSize: 11,
+        fontFamily: FONTS.regular,
+        letterSpacing: 3,
+        color: COLORS.textSecondary,
+    },
+    failSecondaryDivider: {
+        width: 1,
+        height: 14,
+        backgroundColor: "rgba(255,255,255,0.1)",
+        alignSelf: "center",
     },
 });

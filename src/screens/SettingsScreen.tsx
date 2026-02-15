@@ -101,6 +101,7 @@ export default function SettingsScreen({
             visible={visible}
             animationType="slide"
             presentationStyle="fullScreen"
+            onRequestClose={onClose}
         >
             <View style={styles.container}>
                 {/* Header */}
@@ -206,6 +207,7 @@ const styles = StyleSheet.create({
     },
     backButton: {
         marginBottom: 32,
+        alignSelf: "flex-start",
     },
     backText: {
         fontFamily: FONTS.regular,
