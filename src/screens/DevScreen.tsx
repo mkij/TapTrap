@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { useState, memo } from "react";
 import {
   View,
   Text,
@@ -10,12 +10,13 @@ import {
 import { COLORS } from "../constants/colors";
 import { FONTS } from "../constants/fonts";
 import { Category } from "../engine/types";
-import { getAvailableCategories } from "../engine/devTools";
+import { getAvailableCategories, getScreenTypesForCategory } from "../engine/devTools";
 
 interface DevScreenProps {
   visible: boolean;
   onClose: () => void;
   onSelectCategory: (category: Category) => void;
+  onSelectScreen: (category: Category, screenType: string) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -33,50 +34,131 @@ const CATEGORY_COLORS: Record<string, string> = {
   cumulative: "#B2BEC3",
 };
 
-function DevScreen({ visible, onClose, onSelectCategory }: DevScreenProps) {
+function DevScreen({ visible, onClose, onSelectCategory, onSelectScreen }: DevScreenProps) {
   const categories = getAvailableCategories();
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+  const screenTypes = selectedCategory
+    ? getScreenTypesForCategory(selectedCategory)
+    : [];
+
+  const handleClose = () => {
+    setSelectedCategory(null);
+    onClose();
+  };
+
+  const handleBack = () => {
+    setSelectedCategory(null);
+  };
+
+  const handleCategoryPress = (cat: Category) => {
+    const screens = getScreenTypesForCategory(cat);
+    if (screens.length <= 1) {
+      // Only one screen type — skip drill-down, start directly
+      onSelectCategory(cat);
+      handleClose();
+    } else {
+      setSelectedCategory(cat);
+    }
+  };
+
+  const handleScreenPress = (screenType: string) => {
+    if (!selectedCategory) return;
+    onSelectScreen(selectedCategory, screenType);
+    handleClose();
+  };
+
+  const catColor = selectedCategory
+    ? CATEGORY_COLORS[selectedCategory] ?? COLORS.textMuted
+    : COLORS.warning;
 
   return (
     <Modal
       visible={visible}
       animationType="slide"
       transparent
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>DEV TOOLS</Text>
-            <Pressable onPress={onClose} style={styles.closeButton}>
+            {selectedCategory ? (
+              <Pressable onPress={handleBack} style={styles.backButton}>
+                <Text style={[styles.backText, { color: catColor }]}>{"< BACK"}</Text>
+              </Pressable>
+            ) : null}
+            <Text style={[styles.title, { color: selectedCategory ? catColor : COLORS.warning }]}>
+              {selectedCategory ? selectedCategory.toUpperCase() : "DEV TOOLS"}
+            </Text>
+            <Pressable onPress={handleClose} style={styles.closeButton}>
               <Text style={styles.closeText}>X</Text>
             </Pressable>
           </View>
 
-          <Text style={styles.sectionLabel}>TEST BY CATEGORY</Text>
+          {!selectedCategory ? (
+            <>
+              <Text style={styles.sectionLabel}>TEST BY CATEGORY</Text>
+              <ScrollView contentContainerStyle={styles.grid}>
+                {categories.map((cat) => {
+                  const screens = getScreenTypesForCategory(cat);
+                  return (
+                    <Pressable
+                      key={cat}
+                      style={[
+                        styles.tile,
+                        { borderColor: CATEGORY_COLORS[cat] ?? COLORS.textMuted },
+                      ]}
+                      onPress={() => handleCategoryPress(cat)}
+                    >
+                      <View
+                        style={[
+                          styles.tileDot,
+                          { backgroundColor: CATEGORY_COLORS[cat] ?? COLORS.textMuted },
+                        ]}
+                      />
+                      <View style={styles.tileContent}>
+                        <Text style={styles.tileText}>{cat.toUpperCase()}</Text>
+                        <Text style={styles.tileCount}>
+                          {screens.length} {screens.length === 1 ? "screen" : "screens"}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </>
+          ) : (
+            <>
+              <Text style={styles.sectionLabel}>SELECT SCREEN TYPE</Text>
 
-          <ScrollView contentContainerStyle={styles.grid}>
-            {categories.map((cat) => (
+              {/* Random from category */}
               <Pressable
-                key={cat}
-                style={[
-                  styles.tile,
-                  { borderColor: CATEGORY_COLORS[cat] ?? COLORS.textMuted },
-                ]}
+                style={[styles.screenTile, { borderColor: catColor }]}
                 onPress={() => {
-                  onSelectCategory(cat);
-                  onClose();
+                  onSelectCategory(selectedCategory);
+                  handleClose();
                 }}
               >
-                <View
-                  style={[
-                    styles.tileDot,
-                    { backgroundColor: CATEGORY_COLORS[cat] ?? COLORS.textMuted },
-                  ]}
-                />
-                <Text style={styles.tileText}>{cat.toUpperCase()}</Text>
+                <Text style={[styles.screenRandom, { color: catColor }]}>RANDOM</Text>
+                <Text style={styles.screenRules}>Any screen from {selectedCategory}</Text>
               </Pressable>
-            ))}
-          </ScrollView>
+
+              <ScrollView contentContainerStyle={styles.screenList}>
+                {screenTypes.map((st) => (
+                  <Pressable
+                    key={st.screenType}
+                    style={[styles.screenTile, { borderColor: `${catColor}60` }]}
+                    onPress={() => handleScreenPress(st.screenType)}
+                  >
+                    <Text style={styles.screenName}>{st.screenType}</Text>
+                    <Text style={styles.screenRules}>
+                      {st.rules.join(", ")} ({st.count})
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -110,7 +192,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: FONTS.bold,
     letterSpacing: 4,
-    color: COLORS.warning,
+    flex: 1,
+    textAlign: "center",
+  },
+  backButton: {
+    padding: 8,
+  },
+  backText: {
+    fontSize: 11,
+    fontFamily: FONTS.bold,
+    letterSpacing: 2,
   },
   closeButton: {
     padding: 8,
@@ -147,11 +238,50 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
+  tileContent: {
+    gap: 2,
+  },
   tileText: {
     fontSize: 11,
     fontFamily: FONTS.bold,
     letterSpacing: 2,
     color: COLORS.white,
+  },
+  tileCount: {
+    fontSize: 9,
+    fontFamily: FONTS.regular,
+    letterSpacing: 1,
+    color: COLORS.textMuted,
+  },
+  screenList: {
+    gap: 8,
+    paddingBottom: 20,
+  },
+  screenTile: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    marginBottom: 8,
+  },
+  screenName: {
+    fontSize: 12,
+    fontFamily: FONTS.bold,
+    letterSpacing: 2,
+    color: COLORS.white,
+  },
+  screenRandom: {
+    fontSize: 12,
+    fontFamily: FONTS.bold,
+    letterSpacing: 3,
+  },
+  screenRules: {
+    fontSize: 10,
+    fontFamily: FONTS.regular,
+    letterSpacing: 1,
+    color: COLORS.textMuted,
+    marginTop: 2,
   },
 });
 

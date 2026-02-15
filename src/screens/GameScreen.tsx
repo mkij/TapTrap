@@ -29,6 +29,7 @@ export default function GameScreen() {
         continueGame,
         resetGame,
         startTestCategory,
+        startTestScreen,
     } = useGameLoop();
 
     const haptics = useHaptics();
@@ -188,6 +189,9 @@ export default function GameScreen() {
                 onClose={() => setShowDev(false)}
                 onSelectCategory={(category: Category) => {
                     startTestCategory(category);
+                }}
+                onSelectScreen={(category: Category, screenType: string) => {
+                    startTestScreen(category, screenType);
                 }}
             />
         </SafeAreaView>

@@ -5,6 +5,7 @@ import UpsideDownScreen from "./screens/UpsideDownScreen";
 import StroopScreen from "./screens/StroopScreen";
 import GlitchScreen from "./screens/GlitchScreen";
 import CrashScreen from "./screens/CrashScreen";
+import HoldScreen from "./screens/HoldScreen";
 
 
 interface ScreenRendererProps {
@@ -25,6 +26,7 @@ const SCREEN_MAP: Partial<Record<ScreenType, React.ComponentType<any>>> = {
   stroop_display: StroopScreen,
   glitch_screen: GlitchScreen,
   crash_screen: CrashScreen,
+  hold_timer: HoldScreen,
 };
 
 function ScreenRenderer({

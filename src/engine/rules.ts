@@ -17,7 +17,7 @@ export function registerValidator(rule: string, fn: ValidatorFn): void {
 export function validateAction(
     level: Level,
     state: GameState,
-    action: "tap" | "timer_expired"
+    action: ActionType | "tap" | "timer_expired"
 ): ValidationResult {
     const validator = validators[level.rule];
     if (!validator) {
@@ -52,9 +52,13 @@ registerValidator("double_tap", (_level, state, action) => {
     return { passed: false, reason: "wrong_count" };
 });
 
-registerValidator("tap_and_hold", () => {
-    // Placeholder - will be implemented with hold_start/hold_end actions
-    return { passed: false };
+registerValidator("tap_and_hold", (_level, _state, action) => {
+  // "tap" = hold completed (screen calls onTap when fill reaches target)
+  if (action === "tap") return { passed: true };
+  // "hold_end" = released too early
+  if (action === "hold_end") return { passed: false, reason: "wrong_timing" };
+  // timer expired
+  return { passed: false, reason: "time_expired" };
 });
 
 // --- Memory rules ---
@@ -149,31 +153,31 @@ registerValidator("prewarning", (_level, _state, action) => {
 // --- Stroop rule ---
 
 registerValidator("stroop", (level, state, action) => {
-  // Player must tap if target matches the condition, else don't tap
-  const shouldTap = level.params.shouldTap as boolean;
+    // Player must tap if target matches the condition, else don't tap
+    const shouldTap = level.params.shouldTap as boolean;
 
-  if (shouldTap) {
-    if (action === "tap" && state.tapCount === 0) return { passed: true };
-    if (action === "timer_expired") return { passed: false, reason: "too_slow" };
-    return { passed: false };
-  } else {
-    if (action === "tap") return { passed: false, reason: "tapped_when_shouldnt" };
-    return { passed: true };
-  }
+    if (shouldTap) {
+        if (action === "tap" && state.tapCount === 0) return { passed: true };
+        if (action === "timer_expired") return { passed: false, reason: "too_slow" };
+        return { passed: false };
+    } else {
+        if (action === "tap") return { passed: false, reason: "tapped_when_shouldnt" };
+        return { passed: true };
+    }
 });
 
 // --- Visual glitch (normal tap rule underneath) ---
 
 registerValidator("visual_glitch", (_level, state, action) => {
-  if (action === "tap") return { passed: false };
-  if (state.tapCount === 1) return { passed: true };
-  return { passed: false, reason: "wrong_count" };
+    if (action === "tap") return { passed: false };
+    if (state.tapCount === 1) return { passed: true };
+    return { passed: false, reason: "wrong_count" };
 });
 
 // --- Fake crash (tap to fix) ---
 
 registerValidator("fake_crash", (_level, state, action) => {
-  if (action === "tap" && state.tapCount === 0) return { passed: true };
-  if (action === "timer_expired") return { passed: false, reason: "too_slow" };
-  return { passed: false };
+    if (action === "tap" && state.tapCount === 0) return { passed: true };
+    if (action === "timer_expired") return { passed: false, reason: "too_slow" };
+    return { passed: false };
 });

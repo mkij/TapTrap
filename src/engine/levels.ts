@@ -421,6 +421,43 @@ const LEVEL_CATALOG: LevelTemplate[] = [
     difficulty: 2,
     timeLimit: 6.0,
   },
+  // === TIME: Hold ===
+  {
+    id: "T06",
+    instruction: "Hold!",
+    rule: "tap_and_hold",
+    params: { holdDuration: 2.5 },
+    category: "time",
+    subCategory: "hold",
+    screenType: "hold_timer",
+    inputType: "hold",
+    difficulty: 2,
+    timeLimit: 6.0,
+  },
+  {
+    id: "T06b",
+    instruction: "Hold it!",
+    rule: "tap_and_hold",
+    params: { holdDuration: 1.5 },
+    category: "time",
+    subCategory: "hold",
+    screenType: "hold_timer",
+    inputType: "hold",
+    difficulty: 1,
+    timeLimit: 4.0,
+  },
+  {
+    id: "T06c",
+    instruction: "Hold steady...",
+    rule: "tap_and_hold",
+    params: { holdDuration: 3.5 },
+    category: "time",
+    subCategory: "hold",
+    screenType: "hold_timer",
+    inputType: "hold",
+    difficulty: 3,
+    timeLimit: 6.0,
+  },
 ];
 
 // --- Dynamic param resolution ---

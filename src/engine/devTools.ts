@@ -86,3 +86,90 @@ export function generateTestLevel(category: Category): Level {
     requiresDevice: template.requiresDevice,
   };
 }
+
+// Get available screen types for a category
+export function getScreenTypesForCategory(category: Category): { screenType: string; rules: string[]; count: number }[] {
+  const templates = LEVEL_CATALOG.filter((t) => t.category === category);
+  const screenMap = new Map<string, Set<string>>();
+
+  for (const t of templates) {
+    const st = t.screenType;
+    if (!screenMap.has(st)) screenMap.set(st, new Set());
+    screenMap.get(st)!.add(t.rule);
+  }
+
+  return Array.from(screenMap.entries()).map(([screenType, rules]) => ({
+    screenType,
+    rules: Array.from(rules),
+    count: templates.filter((t) => t.screenType === screenType).length,
+  }));
+}
+
+// Generate a test level from specific category + screenType
+export function generateTestLevelByScreen(category: Category, screenType: string): Level {
+  const templates = LEVEL_CATALOG.filter(
+    (t) => t.category === category && t.screenType === screenType
+  );
+
+  if (templates.length === 0) return generateTestLevel(category);
+
+  const template = pickRandom(templates);
+  const params: Record<string, unknown> = { ...template.params };
+  let instruction = template.instruction;
+
+  // Same resolve logic as generateTestLevel
+  if (template.rule === "remember_number" && !params.rememberValue) {
+    params.rememberValue = getRandomInt(2, 7);
+  }
+  if (template.rule === "remember_icon" && !params.rememberIcon) {
+    params.rememberIcon = pickRandom(ICONS);
+  }
+  if (template.rule === "recall_icon" && !params.targetIcon) {
+    params.targetIcon = pickRandom(ICONS);
+  }
+  if (template.rule === "stroop" && !params.stroopText) {
+    const colors = ["red", "green", "blue", "yellow", "purple", "orange"];
+    const textColor = pickRandom(colors);
+    const inkColor = pickRandom(colors.filter((c) => c !== textColor));
+    const matchType = pickRandom(["color", "word"] as const);
+    const target = pickRandom(colors);
+    params.stroopText = textColor;
+    params.stroopColor = inkColor;
+    params.matchType = matchType;
+    params.target = target;
+    params.shouldTap = matchType === "color" ? inkColor === target : textColor === target;
+  }
+  if (template.rule === "math_tap" && !params.expression) {
+    const ops = [
+      { a: 2, b: 2, op: "+", answer: 4 },
+      { a: 3, b: 1, op: "+", answer: 4 },
+      { a: 5, b: 2, op: "-", answer: 3 },
+      { a: 3, b: 2, op: "+", answer: 5 },
+      { a: 2, b: 3, op: "x", answer: 6 },
+    ];
+    const chosen = pickRandom(ops);
+    params.expression = `${chosen.a}${chosen.op}${chosen.b}`;
+    params.answer = chosen.answer;
+    params.displayed = chosen.answer + pickRandom([-2, -1, 1, 2]);
+  }
+
+  for (const [key, value] of Object.entries(params)) {
+    instruction = instruction.replace(`{${key}}`, String(value));
+  }
+
+  return {
+    id: 999,
+    instruction,
+    rule: template.rule,
+    params,
+    timeLimit: (template.timeLimit ?? 4.0) * 1000,
+    category: template.category,
+    subCategory: template.subCategory,
+    screenType: template.screenType,
+    inputType: template.inputType,
+    difficulty: template.difficulty,
+    requiresMemory: template.requiresMemory,
+    requiresPrevious: template.requiresPrevious,
+    requiresDevice: template.requiresDevice,
+  };
+}
