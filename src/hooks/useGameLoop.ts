@@ -3,6 +3,8 @@ import { GameState, Level, INITIAL_MEMORY, ActionType } from "../engine/types";
 import { validateAction } from "../engine/rules";
 import { generateLevel } from "../engine/levels";
 import { getStageLevelDef, buildLevelFromStage, getTotalStageLevels } from "../engine/stages";
+import { generateTestLevel } from "../engine/devTools";
+import { Category } from "../engine/types";
 import { calculateScore, calculateCombo } from "../engine/scoring";
 import { TIMER_TICK_MS, LEVEL_TRANSITION_MS } from "../constants/timing";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -260,6 +262,41 @@ export default function useGameLoop() {
         return () => clearTimer();
     }, [clearTimer]);
 
+    // Dev: start a random level from specific category
+    const startTestCategory = useCallback((category: Category) => {
+        clearTimer();
+        recentRulesRef.current = [];
+        recentCategoriesRef.current = [];
+
+        const testLevel = generateTestLevel(category);
+
+        const freshState: GameState = {
+            ...INITIAL_STATE,
+            status: "playing",
+            currentLevel: 999,
+            memory: { ...INITIAL_MEMORY },
+            rememberedNumber: null,
+            rememberedIcon: null,
+        };
+
+        setLevel(testLevel);
+        setState({
+            ...freshState,
+            timeRemaining: testLevel.timeLimit,
+        });
+
+        timerRef.current = setInterval(() => {
+            setState((prev) => {
+                const newTime = prev.timeRemaining - TIMER_TICK_MS;
+                if (newTime <= 0) {
+                    clearTimer();
+                    return { ...prev, timeRemaining: 0 };
+                }
+                return { ...prev, timeRemaining: newTime };
+            });
+        }, TIMER_TICK_MS);
+    }, [clearTimer]);
+
     const progress = level ? state.timeRemaining / level.timeLimit : 1;
 
     return {
@@ -273,5 +310,6 @@ export default function useGameLoop() {
         startGame,
         continueGame,
         resetGame,
+        startTestCategory,
     };
 }

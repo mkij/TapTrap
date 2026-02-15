@@ -12,6 +12,9 @@ import { useHaptics } from "../hooks/useHaptics";
 import { FONTS } from "../constants/fonts";
 import SettingsScreen from "./SettingsScreen";
 import ScreenRenderer from "../components/game/ScreenRenderer";
+import DevScreen from "./DevScreen";
+import { Category } from "../engine/types";
+
 
 export default function GameScreen() {
     const {
@@ -25,11 +28,13 @@ export default function GameScreen() {
         startGame,
         continueGame,
         resetGame,
+        startTestCategory,
     } = useGameLoop();
 
     const haptics = useHaptics();
 
     const [showSettings, setShowSettings] = useState(false);
+    const [showDev, setShowDev] = useState(false);
 
     const isPlaying = state.status === "playing";
     const isLevelComplete = state.status === "level_complete";
@@ -89,6 +94,12 @@ export default function GameScreen() {
             {isIdle && <AmbientBackground accentColor={accentColor} />}
 
             <View style={styles.header}>
+                <Pressable
+                    onPress={() => setShowDev(true)}
+                    style={styles.devButton}
+                >
+                    <Text style={styles.devText}>DEV</Text>
+                </Pressable>
                 <Text style={styles.title}>TAPTRAP</Text>
                 {isIdle && (
                     <Pressable
@@ -172,6 +183,13 @@ export default function GameScreen() {
                 onClose={() => setShowSettings(false)}
                 onResetHighScore={handleResetHighScore}
             />
+            <DevScreen
+                visible={showDev}
+                onClose={() => setShowDev(false)}
+                onSelectCategory={(category: Category) => {
+                    startTestCategory(category);
+                }}
+            />
         </SafeAreaView>
     );
 }
@@ -195,6 +213,23 @@ const styles = StyleSheet.create({
         letterSpacing: 5,
         color: COLORS.textMuted,
         textTransform: "uppercase",
+    },
+    devButton: {
+        position: "absolute",
+        left: 16,
+        top: 14,
+        paddingVertical: 2,
+        paddingHorizontal: 8,
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: "rgba(255,170,0,0.3)",
+        backgroundColor: "rgba(255,170,0,0.05)",
+    },
+    devText: {
+        fontSize: 10,
+        fontFamily: FONTS.bold,
+        letterSpacing: 2,
+        color: COLORS.warning,
     },
     gearButton: {
         position: "absolute",
