@@ -11,6 +11,7 @@ import AmbientBackground from "../components/game/AmbientBackground";
 import { useHaptics } from "../hooks/useHaptics";
 import { FONTS } from "../constants/fonts";
 import SettingsScreen from "./SettingsScreen";
+import ScreenRenderer from "../components/game/ScreenRenderer";
 
 export default function GameScreen() {
     const {
@@ -20,10 +21,12 @@ export default function GameScreen() {
         highScore,
         setHighScore,
         handleTap,
+        handleAction,
         startGame,
         continueGame,
         resetGame,
     } = useGameLoop();
+
     const haptics = useHaptics();
 
     const [showSettings, setShowSettings] = useState(false);
@@ -75,16 +78,6 @@ export default function GameScreen() {
     }, [isFailed, isGameOver]);
 
     const accentColor = isGameOver || isFailed ? COLORS.danger : COLORS.accent;
-
-    const [showContinue, setShowContinue] = useState(false);
-
-    useEffect(() => {
-        if (isFailed) {
-            setShowContinue(false);
-            const timer = setTimeout(() => setShowContinue(true), 800);
-            return () => clearTimeout(timer);
-        }
-    }, [isFailed]);
 
     const handleResetHighScore = useCallback(() => {
         setHighScore(0);
@@ -158,58 +151,19 @@ export default function GameScreen() {
                         </Pressable>
                     </View>
                 ) : (
-                    <View style={styles.playArea}>
-                        <View style={styles.livesContainer}>
-                            {Array.from({ length: 3 }).map((_, i) => (
-                                <View
-                                    key={i}
-                                    style={[
-                                        styles.lifeDot,
-                                        i < state.lives
-                                            ? styles.lifeDotActive
-                                            : styles.lifeDotEmpty,
-                                    ]}
-                                />
-                            ))}
-                        </View>
-
-                        <TapZone
-                            progress={progress}
-                            tapCount={state.tapCount}
-                            disabled={!isPlaying}
-                            failed={isFailed}
-                            success={isLevelComplete}
-                            onTap={() => {
-                                haptics.tap();
-                                handleTap();
-                            }}
-                        />
-
-                        <View style={styles.instructionContainer}>
-                            <Instruction
-                                text={level?.instruction || ""}
-                                failed={isFailed}
-                                success={isLevelComplete}
-                            />
-                        </View>
-
-                        {isFailed && showContinue && (
-                            <View style={styles.failButtonsAbsolute}>
-                                <Pressable style={styles.continueButton} onPress={continueGame}>
-                                    <Text style={styles.continueButtonText}>CONTINUE</Text>
-                                </Pressable>
-                                <View style={styles.failSecondaryRow}>
-                                    <Pressable style={styles.failSecondaryButton} onPress={startGame}>
-                                        <Text style={styles.failSecondaryText}>RETRY</Text>
-                                    </Pressable>
-                                    <View style={styles.failSecondaryDivider} />
-                                    <Pressable style={styles.failSecondaryButton} onPress={resetGame}>
-                                        <Text style={styles.failSecondaryText}>MENU</Text>
-                                    </Pressable>
-                                </View>
-                            </View>
-                        )}
-                    </View>
+                    <ScreenRenderer
+                        level={level!}
+                        state={state}
+                        progress={progress}
+                        onTap={() => {
+                            haptics.tap();
+                            handleTap();
+                        }}
+                        onAction={handleAction}
+                        onContinue={continueGame}
+                        onRetry={startGame}
+                        onMenu={resetGame}
+                    />
                 )}
             </Animated.View>
 
@@ -296,29 +250,6 @@ const styles = StyleSheet.create({
         letterSpacing: 4,
         color: COLORS.accent,
     },
-    playArea: {
-        alignItems: "center",
-        gap: 24,
-    },
-    livesContainer: {
-        flexDirection: "row",
-        gap: 10,
-    },
-    lifeDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-    },
-    lifeDotActive: {
-        backgroundColor: COLORS.accent,
-    },
-    lifeDotEmpty: {
-        backgroundColor: COLORS.textMuted,
-    },
-    instructionContainer: {
-        minHeight: 40,
-        justifyContent: "center",
-    },
     gameOverTitle: {
         fontSize: 36,
         fontFamily: FONTS.light,
@@ -384,45 +315,5 @@ const styles = StyleSheet.create({
         fontFamily: FONTS.regular,
         letterSpacing: 3,
         color: COLORS.textSecondary,
-    },
-    continueButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 36,
-        borderRadius: 8,
-        borderWidth: 1.5,
-        borderColor: "rgba(255,51,85,0.2)",
-        backgroundColor: "rgba(255,51,85,0.03)",
-    },
-    failButtonsAbsolute: {
-        position: "absolute",
-        bottom: -100,
-        alignItems: "center",
-        gap: 12,
-    },
-    continueButtonText: {
-        fontSize: 13,
-        fontFamily: FONTS.bold,
-        letterSpacing: 3,
-        color: COLORS.danger,
-    },
-    failSecondaryRow: {
-        flexDirection: "row",
-        gap: 24,
-    },
-    failSecondaryButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 16,
-    },
-    failSecondaryText: {
-        fontSize: 11,
-        fontFamily: FONTS.regular,
-        letterSpacing: 3,
-        color: COLORS.textSecondary,
-    },
-    failSecondaryDivider: {
-        width: 1,
-        height: 14,
-        backgroundColor: "rgba(255,255,255,0.1)",
-        alignSelf: "center",
     },
 });
