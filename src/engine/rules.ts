@@ -181,3 +181,14 @@ registerValidator("fake_crash", (_level, state, action) => {
     if (action === "timer_expired") return { passed: false, reason: "too_slow" };
     return { passed: false };
 });
+
+// --- Hold timed: release at the right moment ---
+
+registerValidator("hold_timed", (level, _state, action) => {
+  // "tap" = hold completed (player released at right time)
+  if (action === "tap") return { passed: true };
+  // "hold_end" = released at wrong time
+  if (action === "hold_end") return { passed: false, reason: "wrong_timing" };
+  // timer expired without holding
+  return { passed: false, reason: "time_expired" };
+});
