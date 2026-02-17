@@ -87,10 +87,27 @@ export default function useGameLoop() {
 
             if (newLevel.rule === "remember_number" && newLevel.params.rememberValue) {
                 updatedMemory.number = newLevel.params.rememberValue as number;
+                updatedMemory.numberHistory = [
+                    ...updatedMemory.numberHistory,
+                    newLevel.params.rememberValue as number,
+                ].slice(-5);
             }
 
             if (newLevel.rule === "remember_icon" && newLevel.params.rememberIcon) {
                 updatedMemory.icon = newLevel.params.rememberIcon as string;
+                updatedMemory.iconHistory = [
+                    ...updatedMemory.iconHistory,
+                    newLevel.params.rememberIcon as string,
+                ].slice(-5);
+            }
+
+            // Track color from levels that use colors (avoid_previous_color)
+            if (newLevel.params.levelColor) {
+                updatedMemory.previousColor = newLevel.params.levelColor as string;
+                updatedMemory.colorHistory = [
+                    ...updatedMemory.colorHistory,
+                    newLevel.params.levelColor as string,
+                ].slice(-5);
             }
 
             setLevel(newLevel);

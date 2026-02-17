@@ -19,6 +19,9 @@ import FakePanicScreen from "./screens/FakePanicScreen";
 import ShiftingInstructionScreen from "./screens/ShiftingInstructionScreen";
 import DualInstructionScreen from "./screens/DualInstructionScreen";
 import TruthLieScreen from "./screens/TruthLieScreen";
+import CueMatchScreen from "./screens/CueMatchScreen";
+import RecallDistantScreen from "./screens/RecallDistantScreen";
+import AvoidColorScreen from "./screens/AvoidColorScreen";
 
 
 interface ScreenRendererProps {
@@ -53,6 +56,9 @@ const SCREEN_MAP: Partial<Record<ScreenType, React.ComponentType<any>>> = {
   shifting_instruction: ShiftingInstructionScreen,
   dual_instruction: DualInstructionScreen,
   truth_lie: TruthLieScreen,
+  cue_match: CueMatchScreen,
+  recall_distant: RecallDistantScreen,
+  avoid_color: AvoidColorScreen,
 };
 
 function ScreenRenderer({

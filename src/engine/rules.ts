@@ -272,3 +272,63 @@ registerValidator("fake_panic", (_level, _state, action) => {
   if (action === "timer_expired") return { passed: true };
   return { passed: false };
 });
+
+// --- Memory: Don't press with cue ---
+registerValidator("dont_press_with_cue", (level, state, action) => {
+  const cueIcon = level.params.cueIcon as string;
+  const memorizedIcon = state.memory.icon;
+  const matches = cueIcon === memorizedIcon;
+
+  if (action === "tap") {
+    // If cue matches memory → should NOT tap → fail
+    // If cue doesn't match → should tap → pass
+    return matches
+      ? { passed: false, reason: "wrong_count" }
+      : { passed: true };
+  }
+  if (action === "timer_expired") {
+    // If cue matches → should NOT tap → pass
+    // If cue doesn't match → should tap → fail
+    return matches
+      ? { passed: true }
+      : { passed: false, reason: "time_expired" };
+  }
+  return { passed: false };
+});
+
+// --- Memory: Recall distant number ---
+registerValidator("recall_distant", (level, state, action) => {
+  const stepsBack = (level.params.stepsBack as number) ?? 1;
+  const history = state.memory.numberHistory ?? [];
+  const targetIndex = history.length - stepsBack;
+  const targetNumber = targetIndex >= 0 ? history[targetIndex] : null;
+
+  if (targetNumber === null) {
+    // No history yet — auto pass to avoid unfair fail
+    if (action === "timer_expired") return { passed: true };
+    return { passed: false };
+  }
+
+  if (action === "tap") {
+    const newCount = state.tapCount + 1;
+    if (newCount === targetNumber) return { passed: true };
+    if (newCount > targetNumber) return { passed: false, reason: "wrong_count" };
+    return { passed: false }; // keep going
+  }
+  if (action === "timer_expired") {
+    return state.tapCount === targetNumber
+      ? { passed: true }
+      : { passed: false, reason: "time_expired" };
+  }
+  return { passed: false };
+});
+
+// --- Memory: Avoid previous color (screen handles target validation) ---
+registerValidator("avoid_color", (_level, _state, action) => {
+  // "tap" = correct (non-forbidden) color picked by screen
+  if (action === "tap") return { passed: true };
+  // "hold_end" = wrong (forbidden) color picked by screen
+  if (action === "hold_end") return { passed: false, reason: "wrong_count" };
+  if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+  return { passed: false };
+});

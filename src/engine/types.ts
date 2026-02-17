@@ -53,6 +53,9 @@ export type ScreenType =
   | "shifting_instruction"
   | "dual_instruction"
   | "truth_lie"  
+  | "cue_match"
+  | "recall_distant"
+  | "avoid_color"  
   | "ad_popup"
   | "captcha_screen"
   | "panic_timer"
@@ -138,7 +141,11 @@ export interface MemoryStore {
   icon: string | null;
   previousAction: ActionType | null;
   previousRule: RuleType | null;
+  previousCorrectAction: string | null;
   colorHistory: string[];
+  numberHistory: number[];
+  iconHistory: string[];
+  previousColor: string | null;
   errorCount: number;
   totalTaps: number;
   [key: string]: unknown;
@@ -149,7 +156,11 @@ export const INITIAL_MEMORY: MemoryStore = {
   icon: null,
   previousAction: null,
   previousRule: null,
+  previousCorrectAction: null,
   colorHistory: [],
+  numberHistory: [],
+  iconHistory: [],
+  previousColor: null,
   errorCount: 0,
   totalTaps: 0,
 };
