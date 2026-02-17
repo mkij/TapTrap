@@ -53,12 +53,12 @@ registerValidator("double_tap", (_level, state, action) => {
 });
 
 registerValidator("tap_and_hold", (_level, _state, action) => {
-  // "tap" = hold completed (screen calls onTap when fill reaches target)
-  if (action === "tap") return { passed: true };
-  // "hold_end" = released too early
-  if (action === "hold_end") return { passed: false, reason: "wrong_timing" };
-  // timer expired
-  return { passed: false, reason: "time_expired" };
+    // "tap" = hold completed (screen calls onTap when fill reaches target)
+    if (action === "tap") return { passed: true };
+    // "hold_end" = released too early
+    if (action === "hold_end") return { passed: false, reason: "wrong_timing" };
+    // timer expired
+    return { passed: false, reason: "time_expired" };
 });
 
 // --- Memory rules ---
@@ -185,10 +185,90 @@ registerValidator("fake_crash", (_level, state, action) => {
 // --- Hold timed: release at the right moment ---
 
 registerValidator("hold_timed", (level, _state, action) => {
-  // "tap" = hold completed (player released at right time)
+    // "tap" = hold completed (player released at right time)
+    if (action === "tap") return { passed: true };
+    // "hold_end" = released at wrong time
+    if (action === "hold_end") return { passed: false, reason: "wrong_timing" };
+    // timer expired without holding
+    return { passed: false, reason: "time_expired" };
+});
+
+// --- Habit: Delayed button ---
+registerValidator("delayed_button", (_level, _state, action) => {
+    if (action === "tap") return { passed: true };
+    if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+    return { passed: false, reason: "wrong_timing" };
+});
+
+// --- Habit: Fake next button ---
+registerValidator("fake_next", (_level, _state, action) => {
+    if (action === "tap") return { passed: false, reason: "wrong_count" };
+    if (action === "timer_expired") return { passed: true };
+    return { passed: false };
+});
+
+// --- Surprise: Fake delete (dont tap anything) ---
+registerValidator("fake_delete", (_level, _state, action) => {
+    if (action === "tap") return { passed: false, reason: "wrong_count" };
+    if (action === "timer_expired") return { passed: true };
+    return { passed: false };
+});
+
+// --- Surprise: Jumpscare (tap once despite scare, cosmetic only) ---
+registerValidator("jumpscare", (_level, _state, action) => {
+    // Screen blocks taps before scare, so any tap that reaches here = post-scare
+    if (action === "tap") return { passed: true };
+    if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+    return { passed: false };
+});
+
+// --- Surprise: Misleading counter (tap_n_times but display lies) ---
+registerValidator("misleading_counter", (level, state, action) => {
+    const target = (level.params.count as number) ?? 3;
+    if (action === "tap") {
+        const newCount = state.tapCount + 1;
+        if (newCount === target) return { passed: true };
+        if (newCount > target) return { passed: false, reason: "wrong_count" };
+        return { passed: false }; // keep going
+    }
+    if (action === "timer_expired") {
+        return state.tapCount === target
+            ? { passed: true }
+            : { passed: false, reason: "time_expired" };
+    }
+    return { passed: false };
+});
+
+// --- Perception: Count words (tap N times = word count) ---
+registerValidator("count_words", (level, state, action) => {
+  const target = (level.params.wordCount as number) ?? 3;
+  if (action === "tap") {
+    const newCount = state.tapCount + 1;
+    if (newCount === target) return { passed: true };
+    if (newCount > target) return { passed: false, reason: "wrong_count" };
+    return { passed: false }; // keep going
+  }
+  if (action === "timer_expired") {
+    return state.tapCount === target
+      ? { passed: true }
+      : { passed: false, reason: "time_expired" };
+  }
+  return { passed: false };
+});
+
+// --- Perception: Tap biggest / tap darkest (screen validates correct target) ---
+registerValidator("tap_target", (_level, _state, action) => {
+  // "tap" = correct target (screen sends onTap only for correct)
   if (action === "tap") return { passed: true };
-  // "hold_end" = released at wrong time
-  if (action === "hold_end") return { passed: false, reason: "wrong_timing" };
-  // timer expired without holding
-  return { passed: false, reason: "time_expired" };
+  // "hold_end" = wrong target (screen sends this for wrong picks)
+  if (action === "hold_end") return { passed: false, reason: "wrong_count" };
+  if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+  return { passed: false };
+});
+
+// --- Perception: Fake panic (dont tap) ---
+registerValidator("fake_panic", (_level, _state, action) => {
+  if (action === "tap") return { passed: false, reason: "wrong_count" };
+  if (action === "timer_expired") return { passed: true };
+  return { passed: false };
 });

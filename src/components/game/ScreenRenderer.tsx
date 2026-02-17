@@ -6,6 +6,19 @@ import StroopScreen from "./screens/StroopScreen";
 import GlitchScreen from "./screens/GlitchScreen";
 import CrashScreen from "./screens/CrashScreen";
 import HoldScreen from "./screens/HoldScreen";
+import DelayedButtonScreen from "./screens/DelayedButtonScreen";
+import FakeNextScreen from "./screens/FakeNextScreen";
+import FakeDeleteScreen from "./screens/FakeDeleteScreen";
+import JumpscareScreen from "./screens/JumpscareScreen";
+import MisleadingCounterScreen from "./screens/MisleadingCounterScreen";
+import BackwardsTextScreen from "./screens/BackwardsTextScreen";
+import CountWordsScreen from "./screens/CountWordsScreen";
+import TapBiggestScreen from "./screens/TapBiggestScreen";
+import TapDarkestScreen from "./screens/TapDarkestScreen";
+import FakePanicScreen from "./screens/FakePanicScreen";
+import ShiftingInstructionScreen from "./screens/ShiftingInstructionScreen";
+import DualInstructionScreen from "./screens/DualInstructionScreen";
+import TruthLieScreen from "./screens/TruthLieScreen";
 
 
 interface ScreenRendererProps {
@@ -27,6 +40,19 @@ const SCREEN_MAP: Partial<Record<ScreenType, React.ComponentType<any>>> = {
   glitch_screen: GlitchScreen,
   crash_screen: CrashScreen,
   hold_timer: HoldScreen,
+  delayed_button: DelayedButtonScreen,
+  fake_next: FakeNextScreen,
+  fake_delete: FakeDeleteScreen,
+  jumpscare: JumpscareScreen,
+  misleading_counter: MisleadingCounterScreen,
+  backwards_text: BackwardsTextScreen,
+  count_words: CountWordsScreen,
+  tap_biggest: TapBiggestScreen,
+  tap_darkest: TapDarkestScreen,
+  fake_panic: FakePanicScreen,
+  shifting_instruction: ShiftingInstructionScreen,
+  dual_instruction: DualInstructionScreen,
+  truth_lie: TruthLieScreen,
 };
 
 function ScreenRenderer({

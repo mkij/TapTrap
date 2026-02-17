@@ -105,19 +105,33 @@ export function getScreenTypesForCategory(category: Category): { screenType: str
   }));
 }
 
-// Generate a test level from specific category + screenType
-export function generateTestLevelByScreen(category: Category, screenType: string): Level {
+// Get all templates for a specific category + screenType
+export function getTemplatesForScreen(category: Category, screenType: string) {
+  return LEVEL_CATALOG.filter(
+    (t) => t.category === category && t.screenType === screenType
+  );
+}
+
+// Generate test level by specific index within category+screenType
+export function generateTestLevelByScreen(
+  category: Category,
+  screenType: string,
+  index?: number
+): Level {
   const templates = LEVEL_CATALOG.filter(
     (t) => t.category === category && t.screenType === screenType
   );
 
   if (templates.length === 0) return generateTestLevel(category);
 
-  const template = pickRandom(templates);
+  const template = index !== undefined
+    ? templates[index % templates.length]
+    : pickRandom(templates);
+
   const params: Record<string, unknown> = { ...template.params };
   let instruction = template.instruction;
 
-  // Same resolve logic as generateTestLevel
+  // Same resolve logic
   if (template.rule === "remember_number" && !params.rememberValue) {
     params.rememberValue = getRandomInt(2, 7);
   }

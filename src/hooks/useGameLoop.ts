@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { GameState, Level, INITIAL_MEMORY, ActionType } from "../engine/types";
 import { validateAction } from "../engine/rules";
 import { generateLevel } from "../engine/levels";
-import { getStageLevelDef, buildLevelFromStage, getTotalStageLevels } from "../engine/stages";
+import { getStageLevelDef, buildLevelFromStage } from "../engine/stages";
 import { generateTestLevel, generateTestLevelByScreen } from "../engine/devTools";
 import { Category } from "../engine/types";
 import { calculateScore, calculateCombo } from "../engine/scoring";
@@ -30,6 +30,12 @@ export default function useGameLoop() {
     const recentRulesRef = useRef<string[]>([]);
     const recentCategoriesRef = useRef<string[]>([]);
 
+    const devModeRef = useRef<{
+        active: boolean;
+        category: Category | null;
+        screenType: string | null;
+    }>({ active: false, category: null, screenType: null });
+
     // Load high score on mount
     useEffect(() => {
         AsyncStorage.getItem("highScore").then((value) => {
@@ -48,15 +54,26 @@ export default function useGameLoop() {
     // Start a specific level
     const startLevel = useCallback(
         (levelNumber: number, currentState: GameState) => {
-            // Story mode: use stage definitions; Endless mode: random from catalog
-            const stageDef = getStageLevelDef(levelNumber);
-            const newLevel = stageDef
-                ? buildLevelFromStage(stageDef, levelNumber, currentState.memory.icon)
-                : generateLevel(levelNumber, {
-                    rememberedIcon: currentState.memory.icon,
-                    recentRules: recentRulesRef.current,
-                    recentCategories: recentCategoriesRef.current,
-                });
+            let newLevel;
+            const dev = devModeRef.current;
+
+            if (dev.active && dev.category && dev.screenType) {
+                // Dev mode with screen type: pick from that screen type
+                newLevel = generateTestLevelByScreen(dev.category, dev.screenType);
+            } else if (dev.active && dev.category) {
+                // Dev mode with category only: random from category
+                newLevel = generateTestLevel(dev.category);
+            } else {
+                // Normal game: story mode or endless
+                const stageDef = getStageLevelDef(levelNumber);
+                newLevel = stageDef
+                    ? buildLevelFromStage(stageDef, levelNumber, currentState.memory.icon)
+                    : generateLevel(levelNumber, {
+                        rememberedIcon: currentState.memory.icon,
+                        recentRules: recentRulesRef.current,
+                        recentCategories: recentCategoriesRef.current,
+                    });
+            }
 
             // Track history for endless mode anti-repeat
             recentRulesRef.current = [...recentRulesRef.current, newLevel.rule].slice(-3);
@@ -236,6 +253,7 @@ export default function useGameLoop() {
     const startGame = useCallback(() => {
         recentRulesRef.current = [];
         recentCategoriesRef.current = [];
+        devModeRef.current = { active: false, category: null, screenType: null };
         const freshState: GameState = {
             ...INITIAL_STATE,
             status: "playing",
@@ -253,6 +271,7 @@ export default function useGameLoop() {
     // Reset to menu
     const resetGame = useCallback(() => {
         clearTimer();
+        devModeRef.current = { active: false, category: null, screenType: null };
         setState(INITIAL_STATE);
         setLevel(null);
     }, [clearTimer]);
@@ -267,6 +286,8 @@ export default function useGameLoop() {
         clearTimer();
         recentRulesRef.current = [];
         recentCategoriesRef.current = [];
+
+        devModeRef.current = { active: true, category, screenType };
 
         const testLevel = generateTestLevelByScreen(category, screenType);
 
@@ -297,10 +318,13 @@ export default function useGameLoop() {
         }, TIMER_TICK_MS);
     }, [clearTimer]);
 
+    // Dev: start a random level from specific category
     const startTestCategory = useCallback((category: Category) => {
         clearTimer();
         recentRulesRef.current = [];
         recentCategoriesRef.current = [];
+
+        devModeRef.current = { active: true, category, screenType: null };
 
         const testLevel = generateTestLevel(category);
 
