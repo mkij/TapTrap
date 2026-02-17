@@ -332,3 +332,45 @@ registerValidator("avoid_color", (_level, _state, action) => {
   if (action === "timer_expired") return { passed: false, reason: "time_expired" };
   return { passed: false };
 });
+
+// --- Device: Shake ---
+registerValidator("shake_detect", (_level, _state, action) => {
+  if (action === "shake") return { passed: true };
+  if (action === "tap") return { passed: false, reason: "wrong_count" };
+  if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+  return { passed: false };
+});
+
+// --- Device: Rotate ---
+registerValidator("rotate_detect", (_level, _state, action) => {
+  if (action === "rotate") return { passed: true };
+  if (action === "tap") return { passed: false, reason: "wrong_count" };
+  if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+  return { passed: false };
+});
+
+// --- Device: Vibration hint (tap N times = vibration count) ---
+registerValidator("vibration_count", (level, state, action) => {
+  const target = (level.params.vibrationCount as number) ?? 3;
+  if (action === "tap") {
+    const newCount = state.tapCount + 1;
+    if (newCount === target) return { passed: true };
+    if (newCount > target) return { passed: false, reason: "wrong_count" };
+    return { passed: false };
+  }
+  if (action === "timer_expired") {
+    return state.tapCount === target
+      ? { passed: true }
+      : { passed: false, reason: "time_expired" };
+  }
+  return { passed: false };
+});
+
+// --- Device: Multi-touch ---
+registerValidator("multi_touch_detect", (level, _state, action) => {
+  // Screen sends "multi_touch" only when correct finger count detected
+  if (action === "multi_touch") return { passed: true };
+  if (action === "tap") return { passed: false, reason: "wrong_count" };
+  if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+  return { passed: false };
+});

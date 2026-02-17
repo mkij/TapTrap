@@ -22,6 +22,10 @@ import TruthLieScreen from "./screens/TruthLieScreen";
 import CueMatchScreen from "./screens/CueMatchScreen";
 import RecallDistantScreen from "./screens/RecallDistantScreen";
 import AvoidColorScreen from "./screens/AvoidColorScreen";
+import ShakeScreen from "./screens/ShakeScreen";
+import RotateScreen from "./screens/RotateScreen";
+import VibrationHintScreen from "./screens/VibrationHintScreen";
+import MultiTouchScreen from "./screens/MultiTouchScreen";
 
 
 interface ScreenRendererProps {
@@ -59,6 +63,10 @@ const SCREEN_MAP: Partial<Record<ScreenType, React.ComponentType<any>>> = {
   cue_match: CueMatchScreen,
   recall_distant: RecallDistantScreen,
   avoid_color: AvoidColorScreen,
+  shake_screen: ShakeScreen,
+  rotate_screen: RotateScreen,
+  vibration_hint: VibrationHintScreen,
+  multi_touch: MultiTouchScreen,
 };
 
 function ScreenRenderer({
