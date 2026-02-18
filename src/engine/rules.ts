@@ -374,3 +374,78 @@ registerValidator("multi_touch_detect", (level, _state, action) => {
   if (action === "timer_expired") return { passed: false, reason: "time_expired" };
   return { passed: false };
 });
+
+// --- Math: Multiply (tap answer times) ---
+registerValidator("math_multiply", (level, state, action) => {
+  const answer = (level.params.answer as number) ?? 4;
+  if (action === "tap") {
+    return { passed: false }; // always keep going
+  }
+  if (action === "timer_expired") {
+    return state.tapCount === answer
+      ? { passed: true }
+      : { passed: false, reason: "wrong_count" };
+  }
+  return { passed: false };
+});
+
+// --- Math: Tap prime (screen validates correct target) ---
+registerValidator("tap_prime", (_level, _state, action) => {
+  if (action === "tap") return { passed: true };
+  if (action === "hold_end") return { passed: false, reason: "wrong_count" };
+  if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+  return { passed: false };
+});
+
+// --- Time: Tap at specific time ---
+registerValidator("tap_at_time", (level, state, action) => {
+  const targetSec = (level.params.targetSec as number) ?? 5;
+  const tolerance = (level.params.tolerance as number) ?? 0.5;
+
+  if (action === "tap") {
+    const elapsed = (level.timeLimit - state.timeRemaining) / 1000;
+    const diff = Math.abs(elapsed - targetSec);
+    if (diff <= tolerance) return { passed: true };
+    return { passed: false, reason: "wrong_timing" };
+  }
+  if (action === "timer_expired") {
+    return { passed: false, reason: "time_expired" };
+  }
+  return { passed: false };
+});
+
+// --- Time: Tap before fade (use underlying rule, but fail if too late) ---
+registerValidator("tap_before_fade", (level, state, action) => {
+  const fadeMs = (level.params.fadeMs as number) ?? 2000;
+  const expectedRule = (level.params.expectedRule as string) ?? "tap_once";
+  const elapsedMs = level.timeLimit - state.timeRemaining;
+  const faded = elapsedMs > fadeMs;
+
+  if (action === "tap") {
+    if (expectedRule === "dont_tap") {
+      return { passed: false, reason: "wrong_count" };
+    }
+    if (faded) {
+      return { passed: false, reason: "wrong_timing" };
+    }
+    if (expectedRule === "tap_once") {
+      return state.tapCount + 1 === 1
+        ? { passed: true }
+        : { passed: false, reason: "wrong_count" };
+    }
+    if (expectedRule === "double_tap") {
+      const newCount = state.tapCount + 1;
+      if (newCount === 2) return { passed: true };
+      if (newCount > 2) return { passed: false, reason: "wrong_count" };
+      return { passed: false };
+    }
+    return { passed: true };
+  }
+
+  if (action === "timer_expired") {
+    if (expectedRule === "dont_tap" && state.tapCount === 0) return { passed: true };
+    return { passed: false, reason: "time_expired" };
+  }
+
+  return { passed: false };
+});

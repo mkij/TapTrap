@@ -26,6 +26,10 @@ import ShakeScreen from "./screens/ShakeScreen";
 import RotateScreen from "./screens/RotateScreen";
 import VibrationHintScreen from "./screens/VibrationHintScreen";
 import MultiTouchScreen from "./screens/MultiTouchScreen";
+import NumberPickScreen from "./screens/NumberPickScreen";
+import CountdownScreen from "./screens/CountdownScreen";
+import FadingTextScreen from "./screens/FadingTextScreen";
+
 
 
 interface ScreenRendererProps {
@@ -67,6 +71,9 @@ const SCREEN_MAP: Partial<Record<ScreenType, React.ComponentType<any>>> = {
   rotate_screen: RotateScreen,
   vibration_hint: VibrationHintScreen,
   multi_touch: MultiTouchScreen,
+  number_pick: NumberPickScreen,
+  countdown: CountdownScreen,
+  fading_text: FadingTextScreen,
 };
 
 function ScreenRenderer({
@@ -80,6 +87,7 @@ function ScreenRenderer({
   onMenu,
 }: ScreenRendererProps) {
   const screenType = level.screenType ?? "standard";
+  console.log("SCREEN_TYPE:", screenType, "HAS_COMPONENT:", !!SCREEN_MAP[screenType]);
   const ScreenComponent = SCREEN_MAP[screenType];
 
   // If custom screen exists, use it

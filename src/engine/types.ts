@@ -60,6 +60,7 @@ export type ScreenType =
   | "rotate_screen"
   | "vibration_hint"
   | "multi_touch"  
+  | "number_pick"
   | "ad_popup"
   | "captcha_screen"
   | "panic_timer"
