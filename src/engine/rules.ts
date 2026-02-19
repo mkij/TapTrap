@@ -449,3 +449,43 @@ registerValidator("tap_before_fade", (level, state, action) => {
 
   return { passed: false };
 });
+
+// --- Time: Spaced double tap (screen enforces gap) ---
+registerValidator("spaced_double", (_level, state, action) => {
+  if (action === "tap") {
+    const newCount = state.tapCount + 1;
+    if (newCount === 2) return { passed: true };
+    if (newCount > 2) return { passed: false, reason: "wrong_count" };
+    return { passed: false }; // first tap, keep going
+  }
+  if (action === "hold_end") return { passed: false, reason: "wrong_timing" }; // too early
+  if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+  return { passed: false };
+});
+
+// --- Time: Hold and release in zone ---
+registerValidator("hold_release", (_level, _state, action) => {
+  // Screen handles zone detection:
+  // "tap" = released in zone (correct)
+  // "hold_end" = released outside zone (too early/late)
+  // "hold_start" = bar filled completely (too late)
+  if (action === "tap") return { passed: true };
+  if (action === "hold_end") return { passed: false, reason: "wrong_timing" };
+  if (action === "hold_start") return { passed: false, reason: "wrong_timing" };
+  if (action === "timer_expired") return { passed: false, reason: "time_expired" };
+  return { passed: false };
+});
+
+// --- Device: Battery tap (tap tens digit of battery %) ---
+registerValidator("battery_tap", (level, state, action) => {
+  const target = (level.params.batteryTens as number) ?? 0;
+  if (action === "tap") {
+    return { passed: false }; // keep going, check on timer
+  }
+  if (action === "timer_expired") {
+    return state.tapCount === target
+      ? { passed: true }
+      : { passed: false, reason: "wrong_count" };
+  }
+  return { passed: false };
+});

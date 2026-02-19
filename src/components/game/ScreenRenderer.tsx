@@ -29,6 +29,12 @@ import MultiTouchScreen from "./screens/MultiTouchScreen";
 import NumberPickScreen from "./screens/NumberPickScreen";
 import CountdownScreen from "./screens/CountdownScreen";
 import FadingTextScreen from "./screens/FadingTextScreen";
+import SpacedDoubleScreen from "./screens/SpacedDoubleScreen";
+import HoldReleaseScreen from "./screens/HoldReleaseScreen";
+import BatteryPromptScreen from "./screens/BatteryPromptScreen";
+
+
+
 
 
 
@@ -74,6 +80,9 @@ const SCREEN_MAP: Partial<Record<ScreenType, React.ComponentType<any>>> = {
   number_pick: NumberPickScreen,
   countdown: CountdownScreen,
   fading_text: FadingTextScreen,
+  spaced_double: SpacedDoubleScreen,
+  hold_release: HoldReleaseScreen,
+  battery_prompt: BatteryPromptScreen,
 };
 
 function ScreenRenderer({
