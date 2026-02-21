@@ -13,6 +13,7 @@ import { FONTS } from "../constants/fonts";
 import SettingsScreen from "./SettingsScreen";
 import ScreenRenderer from "../components/game/ScreenRenderer";
 import DevScreen from "./DevScreen";
+import ChapterSelectScreen from "./ChapterSelectScreen";
 import { Category } from "../engine/types";
 
 
@@ -38,6 +39,20 @@ export default function GameScreen() {
     const [showDev, setShowDev] = useState(false);
     const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
     const [showIntro, setShowIntro] = useState(false);
+    const [showChapters, setShowChapters] = useState(false);
+
+    // Chapter data (will be dynamic later)
+    const chaptersData = [
+        { id: 1, title: "AWAKENING", screens: 8, unlocked: true, completed: false, stars: 0, bestScore: 0, bestFocus: 0, mechanics: ["Tap", "Don't tap", "Double tap", "Hold"] },
+        { id: 2, title: "DECEPTION", screens: 10, unlocked: false, completed: false, stars: 0, bestScore: 0, bestFocus: 0, mechanics: ["Opposite", "Fake buttons", "Misleading"] },
+        { id: 3, title: "OVERLOAD", screens: 12, unlocked: false, completed: false, stars: 0, bestScore: 0, bestFocus: 0, mechanics: ["Memory", "Math", "Conflict"] },
+        { id: 4, title: "CHAOS", screens: 15, unlocked: false, completed: false, stars: 0, bestScore: 0, bestFocus: 0, mechanics: ["Mashups", "Sensors", "Everything"] },
+    ];
+
+    const modesData = [
+        { id: "endless", label: "ENDLESS", icon: "♾", unlocked: false, requirement: "Complete Chapter 3", color: COLORS.accent },
+        { id: "hardcore", label: "HARDCORE", icon: "💀", unlocked: false, requirement: "Complete Chapter 4", color: COLORS.danger },
+    ];
 
     // Check first launch
     useEffect(() => {
@@ -209,7 +224,9 @@ export default function GameScreen() {
                         <Pressable style={styles.retryButton} onPress={startGame}>
                             <Text style={styles.retryButtonText}>RETRY</Text>
                         </Pressable>
-                        <Pressable style={styles.chaptersButton} onPress={resetGame}>
+                        <Pressable style={styles.chaptersButton} onPress={() => {
+                            setShowChapters(true);
+                        }}>
                             <Text style={styles.chaptersButtonText}>CHAPTERS</Text>
                         </Pressable>
                         <Pressable style={styles.menuButton} onPress={resetGame}>
@@ -237,6 +254,16 @@ export default function GameScreen() {
                 visible={showSettings}
                 onClose={() => setShowSettings(false)}
                 onResetHighScore={handleResetHighScore}
+            />
+            <ChapterSelectScreen
+                visible={showChapters}
+                onClose={() => setShowChapters(false)}
+                onPlayChapter={(chapterId) => {
+                    setShowChapters(false);
+                    startGame();
+                }}
+                chapters={chaptersData}
+                modes={modesData}
             />
             <DevScreen
                 visible={showDev}
@@ -432,15 +459,15 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 36,
         borderRadius: 8,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-        backgroundColor: "rgba(255,255,255,0.02)",
+        borderWidth: 1.5,
+        borderColor: "rgba(255,255,255,0.15)",
+        backgroundColor: "rgba(255,255,255,0.04)",
         marginTop: 4,
     },
     chaptersButtonText: {
         fontSize: 12,
-        fontFamily: FONTS.regular,
+        fontFamily: FONTS.bold,
         letterSpacing: 3,
-        color: COLORS.textSecondary,
+        color: "rgba(255,255,255,0.6)",
     },
 });
