@@ -36,6 +36,15 @@ export default function GameScreen() {
 
     const [showSettings, setShowSettings] = useState(false);
     const [showDev, setShowDev] = useState(false);
+    const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
+    const [showIntro, setShowIntro] = useState(false);
+
+    // Check first launch
+    useEffect(() => {
+        AsyncStorage.getItem("hasLaunched").then((value) => {
+            setIsFirstLaunch(value === null);
+        });
+    }, []);
 
     const isPlaying = state.status === "playing";
     const isLevelComplete = state.status === "level_complete";
@@ -83,6 +92,33 @@ export default function GameScreen() {
         }
     }, [isFailed, isGameOver]);
 
+    // Intro animation
+    const introOpacity = useRef(new Animated.Value(0)).current;
+    const introLine2Opacity = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (!showIntro) return;
+
+        introOpacity.setValue(0);
+        introLine2Opacity.setValue(0);
+
+        Animated.sequence([
+            Animated.timing(introOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+            Animated.delay(400),
+            Animated.timing(introLine2Opacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+            Animated.delay(800),
+            Animated.parallel([
+                Animated.timing(introOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+                Animated.timing(introLine2Opacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+            ]),
+        ]).start(() => {
+            setShowIntro(false);
+            AsyncStorage.setItem("hasLaunched", "true");
+            setIsFirstLaunch(false);
+            startGame();
+        });
+    }, [showIntro]);
+
     const accentColor = isGameOver || isFailed ? COLORS.danger : COLORS.accent;
 
     const handleResetHighScore = useCallback(() => {
@@ -122,12 +158,27 @@ export default function GameScreen() {
             )}
 
             <Animated.View style={[styles.gameArea, { transform: [{ translateX: shakeAnim }, { translateY: shakeAnimY }] }]}>
-                {isIdle ? (
+                {showIntro ? (
+                    <View style={styles.introContainer}>
+                        <Animated.Text style={[styles.introLine1, { opacity: introOpacity }]}>
+                            Follow the rules.
+                        </Animated.Text>
+                        <Animated.Text style={[styles.introLine2, { opacity: introLine2Opacity }]}>
+                            Or don't.
+                        </Animated.Text>
+                    </View>
+                ) : isIdle ? (
                     <View style={styles.menuContainer}>
                         <Text style={styles.menuTitle}>TAP</Text>
                         <Text style={styles.menuTitleAccent}>TRAP</Text>
                         <Text style={styles.menuSubtitle}>TAP. THINK. SURVIVE.</Text>
-                        <Pressable style={styles.startButton} onPress={startGame}>
+                        <Pressable style={styles.startButton} onPress={() => {
+                            if (isFirstLaunch) {
+                                setShowIntro(true);
+                            } else {
+                                startGame();
+                            }
+                        }}>
                             <Text style={styles.startButtonText}>START</Text>
                         </Pressable>
                     </View>
@@ -157,6 +208,9 @@ export default function GameScreen() {
                         </View>
                         <Pressable style={styles.retryButton} onPress={startGame}>
                             <Text style={styles.retryButtonText}>RETRY</Text>
+                        </Pressable>
+                        <Pressable style={styles.chaptersButton} onPress={resetGame}>
+                            <Text style={styles.chaptersButtonText}>CHAPTERS</Text>
                         </Pressable>
                         <Pressable style={styles.menuButton} onPress={resetGame}>
                             <Text style={styles.menuButtonText}>MENU</Text>
@@ -350,6 +404,40 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     menuButtonText: {
+        fontSize: 12,
+        fontFamily: FONTS.regular,
+        letterSpacing: 3,
+        color: COLORS.textSecondary,
+    },
+    introContainer: {
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 12,
+    },
+    introLine1: {
+        fontSize: 22,
+        fontFamily: FONTS.light,
+        letterSpacing: 2,
+        color: COLORS.white,
+        textAlign: "center",
+    },
+    introLine2: {
+        fontSize: 22,
+        fontFamily: FONTS.bold,
+        letterSpacing: 2,
+        color: COLORS.accent,
+        textAlign: "center",
+    },
+    chaptersButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 36,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: "rgba(255,255,255,0.02)",
+        marginTop: 4,
+    },
+    chaptersButtonText: {
         fontSize: 12,
         fontFamily: FONTS.regular,
         letterSpacing: 3,
