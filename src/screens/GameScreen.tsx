@@ -27,10 +27,12 @@ export default function GameScreen() {
         handleTap,
         handleAction,
         startGame,
+        startChapter,
         continueGame,
         resetGame,
         startTestCategory,
         startTestScreen,
+        chapterInfo,
     } = useGameLoop();
 
     const haptics = useHaptics();
@@ -197,6 +199,28 @@ export default function GameScreen() {
                             <Text style={styles.startButtonText}>START</Text>
                         </Pressable>
                     </View>
+                ) : state.status === "chapter_complete" ? (
+                    <View style={styles.menuContainer}>
+                        <Text style={styles.menuTitle}>CHAPTER</Text>
+                        <Text style={[styles.menuTitleAccent, { color: COLORS.accent }]}>COMPLETE</Text>
+                        <View style={styles.gameOverStats}>
+                            <View style={styles.statItem}>
+                                <Text style={styles.statValue}>{state.score}</Text>
+                                <Text style={styles.statLabel}>SCORE</Text>
+                            </View>
+                            <View style={styles.statDivider} />
+                            <View style={styles.statItem}>
+                                <Text style={styles.statValue}>{state.currentLevel}</Text>
+                                <Text style={styles.statLabel}>ROUNDS</Text>
+                            </View>
+                        </View>
+                        <Pressable style={styles.startButton} onPress={() => setShowChapters(true)}>
+                            <Text style={styles.startButtonText}>CONTINUE</Text>
+                        </Pressable>
+                        <Pressable style={styles.menuButton} onPress={resetGame}>
+                            <Text style={styles.menuButtonText}>MENU</Text>
+                        </Pressable>
+                    </View>
                 ) : isGameOver ? (
                     <View style={styles.menuContainer}>
                         <Text style={styles.gameOverTitle}>GAME</Text>
@@ -259,8 +283,9 @@ export default function GameScreen() {
                 visible={showChapters}
                 onClose={() => setShowChapters(false)}
                 onPlayChapter={(chapterId) => {
+                    console.log("ON PLAY CHAPTER:", chapterId);
                     setShowChapters(false);
-                    startGame();
+                    startChapter(chapterId);
                 }}
                 chapters={chaptersData}
                 modes={modesData}

@@ -176,7 +176,7 @@ export const INITIAL_MEMORY: MemoryStore = {
 
 // --- Game state ---
 export interface GameState {
-  status: "idle" | "playing" | "failed" | "level_complete" | "game_over";
+  status: "idle" | "playing" | "level_complete" | "failed" | "game_over" | "chapter_complete";
   currentLevel: number;
   score: number;
   lives: number;

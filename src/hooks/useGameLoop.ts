@@ -29,6 +29,7 @@ export default function useGameLoop() {
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const recentRulesRef = useRef<string[]>([]);
     const recentCategoriesRef = useRef<string[]>([]);
+    const chapterRef = useRef<{ id: number; totalScreens: number; completed: number } | null>(null);
 
     const devModeRef = useRef<{
         active: boolean;
@@ -182,6 +183,17 @@ export default function useGameLoop() {
                 rememberedIcon: updatedMemory.icon,
             };
 
+            // Check chapter completion
+            console.log("CHAPTER REF:", JSON.stringify(chapterRef.current));
+            if (chapterRef.current) {
+                chapterRef.current.completed += 1;
+                console.log("CHAPTER:", chapterRef.current.completed, "/", chapterRef.current.totalScreens);
+                if (chapterRef.current.completed >= chapterRef.current.totalScreens) {
+                    setState({ ...updatedState, status: "chapter_complete" });
+                    return;
+                }
+            }
+
             setState(updatedState);
 
             setTimeout(() => {
@@ -271,6 +283,31 @@ export default function useGameLoop() {
         recentRulesRef.current = [];
         recentCategoriesRef.current = [];
         devModeRef.current = { active: false, category: null, screenType: null };
+        chapterRef.current = null;
+        const freshState: GameState = {
+            ...INITIAL_STATE,
+            status: "playing",
+            memory: { ...INITIAL_MEMORY },
+        };
+        setState(freshState);
+        startLevel(1, freshState);
+    }, [startLevel]);
+
+    // Chapter screen counts
+    const CHAPTER_SCREENS: Record<number, number> = { 1: 8, 2: 10, 3: 12, 4: 15 };
+
+    // Start a chapter
+    const startChapter = useCallback((chapterId: number) => {
+        console.log("START CHAPTER CALLED:", chapterId);
+        recentRulesRef.current = [];
+        recentCategoriesRef.current = [];
+        devModeRef.current = { active: false, category: null, screenType: null };
+        chapterRef.current = {
+            id: chapterId,
+            totalScreens: CHAPTER_SCREENS[chapterId] ?? 10,
+            completed: 0,
+        };
+        console.log("CHAPTER REF SET:", JSON.stringify(chapterRef.current));
         const freshState: GameState = {
             ...INITIAL_STATE,
             status: "playing",
@@ -287,8 +324,10 @@ export default function useGameLoop() {
 
     // Reset to menu
     const resetGame = useCallback(() => {
+        console.log("RESET GAME CALLED");
         clearTimer();
         devModeRef.current = { active: false, category: null, screenType: null };
+        chapterRef.current = null;
         setState(INITIAL_STATE);
         setLevel(null);
     }, [clearTimer]);
@@ -383,9 +422,11 @@ export default function useGameLoop() {
         handleTap,
         handleAction,
         startGame,
+        startChapter,
         continueGame,
         resetGame,
         startTestCategory,
         startTestScreen,
+        chapterInfo: chapterRef.current,
     };
 }

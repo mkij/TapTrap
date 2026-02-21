@@ -96,7 +96,6 @@ function ScreenRenderer({
   onMenu,
 }: ScreenRendererProps) {
   const screenType = level.screenType ?? "standard";
-  console.log("SCREEN_TYPE:", screenType, "HAS_COMPONENT:", !!SCREEN_MAP[screenType]);
   const ScreenComponent = SCREEN_MAP[screenType];
 
   // If custom screen exists, use it
