@@ -37,6 +37,7 @@ export default function GameScreen() {
         startTestCategory,
         startTestScreen,
         chapterInfo,
+        gameMode,
     } = useGameLoop();
 
     const haptics = useHaptics();
@@ -46,7 +47,8 @@ export default function GameScreen() {
     const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
     const [showIntro, setShowIntro] = useState(false);
     const [showChapters, setShowChapters] = useState(false);
-    const { chapters: chaptersData, modes: modesData, nextChapterId, markChapterComplete } = useChapterProgress();
+    const [isNewBest, setIsNewBest] = useState(false);
+    const { chapters: chaptersData, modes: modesData, nextChapterId, markChapterComplete, updateEndlessBest, updateHardcoreBest, endlessBest, hardcoreBest } = useChapterProgress();
 
     // Check first launch
     useEffect(() => {
@@ -64,6 +66,15 @@ export default function GameScreen() {
     useEffect(() => {
         if (isFailed || isGameOver) haptics.fail();
         if (isLevelComplete) haptics.success();
+        if (isGameOver) {
+            if (gameMode === "endless") {
+                setIsNewBest(updateEndlessBest(state.score));
+            } else if (gameMode === "hardcore") {
+                setIsNewBest(updateHardcoreBest(state.score));
+            } else {
+                setIsNewBest(false);
+            }
+        }
     }, [isFailed, isGameOver, isLevelComplete]);
 
     const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -136,6 +147,16 @@ export default function GameScreen() {
         return Math.min(100, Math.round((correct / total) * 100));
     }, [state.memory.totalTaps, state.memory.correctTaps]);
 
+    const getBestForMode = (): number => {
+        if (gameMode === "endless") return endlessBest;
+        if (gameMode === "hardcore") return hardcoreBest;
+        if (chapterInfo) {
+            const ch = chaptersData.find((c) => c.id === chapterInfo.id);
+            return ch?.bestScore ?? 0;
+        }
+        return 0;
+    };
+
     const getFocusColor = (focus: number): string => {
         if (focus >= 70) return COLORS.accent;
         if (focus >= 50) return COLORS.warning;
@@ -175,8 +196,8 @@ export default function GameScreen() {
                 <ScoreBar
                     level={state.currentLevel}
                     score={state.score}
-                    combo={state.combo}
-                    highScore={highScore}
+                    combo={isLevelComplete ? Math.max(0, state.combo - 1) : state.combo}
+                    highScore={getBestForMode()}
                 />
             )}
 
@@ -196,6 +217,7 @@ export default function GameScreen() {
                         <Text style={styles.menuTitleAccent}>TRAP</Text>
                         <Text style={styles.menuSubtitle}>TAP. THINK. SURVIVE.</Text>
                         <Pressable style={styles.startButton} onPress={() => {
+                            setIsNewBest(false);
                             if (isFirstLaunch) {
                                 setShowIntro(true);
                             } else {
@@ -250,8 +272,10 @@ export default function GameScreen() {
                             </View>
                             <View style={styles.statDivider} />
                             <View style={styles.statItem}>
-                                <Text style={styles.statValue}>{state.currentLevel}</Text>
-                                <Text style={styles.statLabel}>LEVEL</Text>
+                                <Text style={[styles.statValue, { color: "rgba(255,255,255,0.5)" }]}>
+                                    {Math.max(getBestForMode(), state.score).toLocaleString()}
+                                </Text>
+                                <Text style={styles.statLabel}>BEST</Text>
                             </View>
                             <View style={styles.statDivider} />
                             <View style={styles.statItem}>
@@ -261,6 +285,9 @@ export default function GameScreen() {
                                 <Text style={styles.statLabel}>FOCUS</Text>
                             </View>
                         </View>
+                        {isNewBest && (
+                            <Text style={styles.newBestLabel}>NEW BEST!</Text>
+                        )}
                         <Pressable style={styles.retryButton} onPress={startGame}>
                             <Text style={styles.retryButtonText}>RETRY</Text>
                         </Pressable>
@@ -506,13 +533,13 @@ const styles = StyleSheet.create({
         color: COLORS.accent,
         textAlign: "center",
     },
-    focusDetail: {
-        fontSize: 11,
-        fontFamily: FONTS.regular,
-        color: "rgba(255,255,255,0.3)",
-        letterSpacing: 1,
+    newBestLabel: {
+        fontSize: 14,
+        fontFamily: FONTS.bold,
+        color: COLORS.accent,
+        letterSpacing: 3,
         marginTop: 4,
-        marginBottom: 16,
+        marginBottom: 12,
     },
     chaptersButton: {
         paddingVertical: 10,

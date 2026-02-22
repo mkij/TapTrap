@@ -31,17 +31,24 @@ function calculateStars(score: number, screens: number): number {
 
 export default function useChapterProgress() {
     const [chapters, setChapters] = useState<ChapterProgress[]>(DEFAULT_CHAPTERS);
+    const [endlessBest, setEndlessBest] = useState(0);
+    const [hardcoreBest, setHardcoreBest] = useState(0);
     const [loaded, setLoaded] = useState(false);
 
     // Load from AsyncStorage
     useEffect(() => {
-        AsyncStorage.getItem(STORAGE_KEY).then((value) => {
-            if (value) {
+        Promise.all([
+            AsyncStorage.getItem(STORAGE_KEY),
+            AsyncStorage.getItem("endlessBest"),
+            AsyncStorage.getItem("hardcoreBest"),
+        ]).then(([chaptersVal, endlessVal, hardcoreVal]) => {
+            if (chaptersVal) {
                 try {
-                    const saved = JSON.parse(value) as ChapterProgress[];
-                    setChapters(saved);
+                    setChapters(JSON.parse(chaptersVal) as ChapterProgress[]);
                 } catch {}
             }
+            if (endlessVal) setEndlessBest(parseInt(endlessVal, 10));
+            if (hardcoreVal) setHardcoreBest(parseInt(hardcoreVal, 10));
             setLoaded(true);
         });
     }, []);
@@ -77,6 +84,26 @@ export default function useChapterProgress() {
         });
     }, []);
 
+    // Update endless best
+    const updateEndlessBest = useCallback((score: number) => {
+        if (score > endlessBest) {
+            setEndlessBest(score);
+            AsyncStorage.setItem("endlessBest", score.toString());
+            return true; // new best
+        }
+        return false;
+    }, [endlessBest]);
+
+    // Update hardcore best
+    const updateHardcoreBest = useCallback((score: number) => {
+        if (score > hardcoreBest) {
+            setHardcoreBest(score);
+            AsyncStorage.setItem("hardcoreBest", score.toString());
+            return true;
+        }
+        return false;
+    }, [hardcoreBest]);
+
     // Next chapter to play
     const nextChapterId = chapters.find((c) => c.unlocked && !c.completed)?.id
         ?? (chapters.every((c) => c.completed) ? 1 : 1);
@@ -90,6 +117,7 @@ export default function useChapterProgress() {
             unlocked: chapters.find((c) => c.id === 3)?.completed ?? false,
             requirement: "Complete Chapter 3",
             color: "#00ff88",
+            bestScore: endlessBest,
         },
         {
             id: "hardcore",
@@ -98,6 +126,7 @@ export default function useChapterProgress() {
             unlocked: chapters.find((c) => c.id === 4)?.completed ?? false,
             requirement: "Complete Chapter 4",
             color: "#ff3355",
+            bestScore: hardcoreBest,
         },
     ];
 
@@ -107,5 +136,9 @@ export default function useChapterProgress() {
         loaded,
         nextChapterId,
         markChapterComplete,
+        updateEndlessBest,
+        updateHardcoreBest,
+        endlessBest,
+        hardcoreBest,
     };
 }

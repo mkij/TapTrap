@@ -180,9 +180,12 @@ export default function useGameLoop() {
         (memoryUpdate?: Partial<typeof INITIAL_MEMORY>) => {
             clearTimer();
             const newCombo = calculateCombo(state.combo, true);
-            const points = level
+            const basePoints = level
                 ? calculateScore(state.combo, state.timeRemaining, level.timeLimit)
                 : 0;
+            const points = gameModeRef.current === "hardcore"
+                ? Math.round(basePoints * 1.5)
+                : basePoints;
 
             // Merge memory: current + validator update + track previous action/rule
             const updatedMemory = {
@@ -493,5 +496,6 @@ export default function useGameLoop() {
         startTestCategory,
         startTestScreen,
         chapterInfo: chapterRef.current,
+        gameMode: gameModeRef.current,
     };
 }

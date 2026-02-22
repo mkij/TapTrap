@@ -31,6 +31,7 @@ interface ModeData {
     unlocked: boolean;
     requirement: string;
     color: string;
+    bestScore: number;
 }
 
 interface Props {
@@ -243,7 +244,7 @@ function ChapterCard({
 
 // --- Mode Card ---
 function ModeCard({ mode, onPress }: { mode: ModeData; onPress: () => void }) {
-    const { label, icon, unlocked, requirement, color } = mode;
+    const { label, icon, unlocked, requirement, color, bestScore } = mode;
 
     return (
         <Pressable
@@ -270,6 +271,16 @@ function ModeCard({ mode, onPress }: { mode: ModeData; onPress: () => void }) {
                 <View style={styles.modeRequirement}>
                     <LockIcon size={10} color="rgba(255,255,255,0.15)" />
                     <Text style={styles.modeRequirementText}>{requirement}</Text>
+                </View>
+            )}
+            {unlocked && bestScore > 0 && (
+                <Text style={[styles.modeBestScore, { color: `${color}80` }]}>
+                    Best: {bestScore.toLocaleString()}
+                </Text>
+            )}
+            {mode.id === "hardcore" && unlocked && (
+                <View style={[styles.multiplierBadge, { borderColor: `${color}30`, backgroundColor: `${color}08` }]}>
+                    <Text style={[styles.multiplierText, { color }]}>1.5x SCORE</Text>
                 </View>
             )}
         </Pressable>
@@ -659,6 +670,24 @@ const styles = StyleSheet.create({
         fontSize: 9,
         fontFamily: FONTS.regular,
         color: "rgba(255,255,255,0.15)",
+    },
+    modeBestScore: {
+        fontSize: 10,
+        fontFamily: FONTS.regular,
+        letterSpacing: 1,
+        marginTop: 6,
+    },
+    multiplierBadge: {
+        marginTop: 6,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        borderWidth: 1,
+    },
+    multiplierText: {
+        fontSize: 8,
+        fontFamily: FONTS.bold,
+        letterSpacing: 2,
     },
     // Detail
     detailContainer: {
