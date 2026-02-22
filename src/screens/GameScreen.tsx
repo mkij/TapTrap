@@ -128,6 +128,20 @@ export default function GameScreen() {
         });
     }, [showIntro]);
 
+    // Focus score calculation
+    const calculateFocus = useCallback(() => {
+        const total = state.memory.totalTaps;
+        const correct = state.memory.correctTaps;
+        if (total === 0) return 0;
+        return Math.min(100, Math.round((correct / total) * 100));
+    }, [state.memory.totalTaps, state.memory.correctTaps]);
+
+    const getFocusColor = (focus: number): string => {
+        if (focus >= 70) return COLORS.accent;
+        if (focus >= 50) return COLORS.warning;
+        return COLORS.danger;
+    };
+
     const accentColor = isGameOver || isFailed ? COLORS.danger : COLORS.accent;
 
     const handleResetHighScore = useCallback(() => {
@@ -205,13 +219,17 @@ export default function GameScreen() {
                                 <Text style={styles.statValue}>{state.currentLevel}</Text>
                                 <Text style={styles.statLabel}>ROUNDS</Text>
                             </View>
+                            <View style={styles.statDivider} />
+                            <View style={styles.statItem}>
+                                <Text style={[styles.statValue, { color: getFocusColor(calculateFocus()) }]}>
+                                    {calculateFocus()}%
+                                </Text>
+                                <Text style={styles.statLabel}>FOCUS</Text>
+                            </View>
                         </View>
                         <Pressable style={styles.startButton} onPress={() => {
                             if (chapterInfo) {
-                                const focus = state.memory.totalTaps > 0
-                                    ? Math.round((state.currentLevel / state.memory.totalTaps) * 100)
-                                    : 0;
-                                markChapterComplete(chapterInfo.id, state.score, Math.min(focus, 100));
+                                markChapterComplete(chapterInfo.id, state.score, calculateFocus());
                             }
                             setShowChapters(true);
                         }}>
@@ -235,15 +253,13 @@ export default function GameScreen() {
                                 <Text style={styles.statValue}>{state.currentLevel}</Text>
                                 <Text style={styles.statLabel}>LEVEL</Text>
                             </View>
-                            {highScore > 0 && (
-                                <>
-                                    <View style={styles.statDivider} />
-                                    <View style={styles.statItem}>
-                                        <Text style={[styles.statValue, { color: COLORS.accent }]}>{highScore}</Text>
-                                        <Text style={styles.statLabel}>BEST</Text>
-                                    </View>
-                                </>
-                            )}
+                            <View style={styles.statDivider} />
+                            <View style={styles.statItem}>
+                                <Text style={[styles.statValue, { color: getFocusColor(calculateFocus()) }]}>
+                                    {calculateFocus()}%
+                                </Text>
+                                <Text style={styles.statLabel}>FOCUS</Text>
+                            </View>
                         </View>
                         <Pressable style={styles.retryButton} onPress={startGame}>
                             <Text style={styles.retryButtonText}>RETRY</Text>
@@ -489,6 +505,14 @@ const styles = StyleSheet.create({
         letterSpacing: 2,
         color: COLORS.accent,
         textAlign: "center",
+    },
+    focusDetail: {
+        fontSize: 11,
+        fontFamily: FONTS.regular,
+        color: "rgba(255,255,255,0.3)",
+        letterSpacing: 1,
+        marginTop: 4,
+        marginBottom: 16,
     },
     chaptersButton: {
         paddingVertical: 10,

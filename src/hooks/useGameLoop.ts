@@ -186,6 +186,7 @@ export default function useGameLoop() {
                 previousRule: level?.rule ?? null,
                 previousCorrectAction: state.tapCount > 0 ? "tap" : "timer_expired",
                 totalTaps: state.memory.totalTaps + state.tapCount,
+                correctTaps: state.memory.correctTaps + state.tapCount,
             };
 
             const updatedState: GameState = {

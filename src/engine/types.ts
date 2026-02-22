@@ -157,6 +157,7 @@ export interface MemoryStore {
   previousColor: string | null;
   errorCount: number;
   totalTaps: number;
+  correctTaps: number;
   [key: string]: unknown;
 }
 
@@ -172,6 +173,7 @@ export const INITIAL_MEMORY: MemoryStore = {
   previousColor: null,
   errorCount: 0,
   totalTaps: 0,
+  correctTaps: 0,
 };
 
 // --- Game state ---
