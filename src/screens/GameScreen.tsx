@@ -15,6 +15,8 @@ import ScreenRenderer from "../components/game/ScreenRenderer";
 import DevScreen from "./DevScreen";
 import ChapterSelectScreen from "./ChapterSelectScreen";
 import { Category } from "../engine/types";
+import useChapterProgress from "../hooks/useChapterProgress";
+
 
 
 export default function GameScreen() {
@@ -28,6 +30,8 @@ export default function GameScreen() {
         handleAction,
         startGame,
         startChapter,
+        startEndless,
+        startHardcore,
         continueGame,
         resetGame,
         startTestCategory,
@@ -42,19 +46,7 @@ export default function GameScreen() {
     const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
     const [showIntro, setShowIntro] = useState(false);
     const [showChapters, setShowChapters] = useState(false);
-
-    // Chapter data (will be dynamic later)
-    const chaptersData = [
-        { id: 1, title: "AWAKENING", screens: 8, unlocked: true, completed: false, stars: 0, bestScore: 0, bestFocus: 0, mechanics: ["Tap", "Don't tap", "Double tap", "Hold"] },
-        { id: 2, title: "DECEPTION", screens: 10, unlocked: false, completed: false, stars: 0, bestScore: 0, bestFocus: 0, mechanics: ["Opposite", "Fake buttons", "Misleading"] },
-        { id: 3, title: "OVERLOAD", screens: 12, unlocked: false, completed: false, stars: 0, bestScore: 0, bestFocus: 0, mechanics: ["Memory", "Math", "Conflict"] },
-        { id: 4, title: "CHAOS", screens: 15, unlocked: false, completed: false, stars: 0, bestScore: 0, bestFocus: 0, mechanics: ["Mashups", "Sensors", "Everything"] },
-    ];
-
-    const modesData = [
-        { id: "endless", label: "ENDLESS", icon: "♾", unlocked: false, requirement: "Complete Chapter 3", color: COLORS.accent },
-        { id: "hardcore", label: "HARDCORE", icon: "💀", unlocked: false, requirement: "Complete Chapter 4", color: COLORS.danger },
-    ];
+    const { chapters: chaptersData, modes: modesData, nextChapterId, markChapterComplete } = useChapterProgress();
 
     // Check first launch
     useEffect(() => {
@@ -132,7 +124,7 @@ export default function GameScreen() {
             setShowIntro(false);
             AsyncStorage.setItem("hasLaunched", "true");
             setIsFirstLaunch(false);
-            startGame();
+            startChapter(1);
         });
     }, [showIntro]);
 
@@ -193,7 +185,7 @@ export default function GameScreen() {
                             if (isFirstLaunch) {
                                 setShowIntro(true);
                             } else {
-                                startGame();
+                                startChapter(nextChapterId);
                             }
                         }}>
                             <Text style={styles.startButtonText}>START</Text>
@@ -214,7 +206,15 @@ export default function GameScreen() {
                                 <Text style={styles.statLabel}>ROUNDS</Text>
                             </View>
                         </View>
-                        <Pressable style={styles.startButton} onPress={() => setShowChapters(true)}>
+                        <Pressable style={styles.startButton} onPress={() => {
+                            if (chapterInfo) {
+                                const focus = state.memory.totalTaps > 0
+                                    ? Math.round((state.currentLevel / state.memory.totalTaps) * 100)
+                                    : 0;
+                                markChapterComplete(chapterInfo.id, state.score, Math.min(focus, 100));
+                            }
+                            setShowChapters(true);
+                        }}>
                             <Text style={styles.startButtonText}>CONTINUE</Text>
                         </Pressable>
                         <Pressable style={styles.menuButton} onPress={resetGame}>
@@ -281,11 +281,21 @@ export default function GameScreen() {
             />
             <ChapterSelectScreen
                 visible={showChapters}
-                onClose={() => setShowChapters(false)}
+                onClose={() => {
+                    setShowChapters(false);
+                    resetGame();
+                }}
                 onPlayChapter={(chapterId) => {
-                    console.log("ON PLAY CHAPTER:", chapterId);
                     setShowChapters(false);
                     startChapter(chapterId);
+                }}
+                onPlayMode={(modeId) => {
+                    setShowChapters(false);
+                    if (modeId === "endless") {
+                        startEndless();
+                    } else if (modeId === "hardcore") {
+                        startHardcore();
+                    }
                 }}
                 chapters={chaptersData}
                 modes={modesData}

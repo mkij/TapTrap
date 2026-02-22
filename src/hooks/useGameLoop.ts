@@ -317,6 +317,38 @@ export default function useGameLoop() {
         startLevel(1, freshState);
     }, [startLevel]);
 
+    // Start endless mode (infinite run, no chapter tracking)
+    const startEndless = useCallback(() => {
+        recentRulesRef.current = [];
+        recentCategoriesRef.current = [];
+        devModeRef.current = { active: false, category: null, screenType: null };
+        chapterRef.current = null;
+        const freshState: GameState = {
+            ...INITIAL_STATE,
+            status: "playing",
+            lives: 3,
+            memory: { ...INITIAL_MEMORY },
+        };
+        setState(freshState);
+        startLevel(1, freshState);
+    }, [startLevel]);
+
+    // Start hardcore mode (1 life, shorter timers)
+    const startHardcore = useCallback(() => {
+        recentRulesRef.current = [];
+        recentCategoriesRef.current = [];
+        devModeRef.current = { active: false, category: null, screenType: null };
+        chapterRef.current = null;
+        const freshState: GameState = {
+            ...INITIAL_STATE,
+            status: "playing",
+            lives: 1,
+            memory: { ...INITIAL_MEMORY },
+        };
+        setState(freshState);
+        startLevel(1, freshState);
+    }, [startLevel]);
+
     // Continue after fail (keep lives, score, level)
     const continueGame = useCallback(() => {
         startLevel(state.currentLevel, state);
@@ -423,6 +455,8 @@ export default function useGameLoop() {
         handleAction,
         startGame,
         startChapter,
+        startEndless,
+        startHardcore,
         continueGame,
         resetGame,
         startTestCategory,

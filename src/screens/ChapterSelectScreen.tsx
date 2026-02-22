@@ -37,6 +37,7 @@ interface Props {
     visible: boolean;
     onClose: () => void;
     onPlayChapter: (chapterId: number) => void;
+    onPlayMode: (modeId: string) => void;
     chapters: ChapterData[];
     modes: ModeData[];
 }
@@ -241,11 +242,12 @@ function ChapterCard({
 }
 
 // --- Mode Card ---
-function ModeCard({ mode }: { mode: ModeData }) {
+function ModeCard({ mode, onPress }: { mode: ModeData; onPress: () => void }) {
     const { label, icon, unlocked, requirement, color } = mode;
 
     return (
-        <View
+        <Pressable
+            onPress={() => unlocked && onPress()}
             style={[
                 styles.modeCard,
                 {
@@ -255,7 +257,7 @@ function ModeCard({ mode }: { mode: ModeData }) {
                 },
             ]}
         >
-            <Text style={styles.modeIcon}>{icon}</Text>
+            <Text style={[styles.modeIcon, { color: unlocked ? color : "rgba(255,255,255,0.3)" }]}>{icon}</Text>
             <Text
                 style={[
                     styles.modeLabel,
@@ -270,7 +272,7 @@ function ModeCard({ mode }: { mode: ModeData }) {
                     <Text style={styles.modeRequirementText}>{requirement}</Text>
                 </View>
             )}
-        </View>
+        </Pressable>
     );
 }
 
@@ -390,6 +392,7 @@ export default function ChapterSelectScreen({
     visible,
     onClose,
     onPlayChapter,
+    onPlayMode,
     chapters,
     modes,
 }: Props) {
@@ -448,7 +451,11 @@ export default function ChapterSelectScreen({
 
                             <View style={styles.modesRow}>
                                 {modes.map((mode) => (
-                                    <ModeCard key={mode.id} mode={mode} />
+                                    <ModeCard
+                                        key={mode.id}
+                                        mode={mode}
+                                        onPress={() => onPlayMode(mode.id)}
+                                    />
                                 ))}
                             </View>
 
@@ -635,7 +642,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         alignItems: "center",
     },
-    modeIcon: { fontSize: 24, marginBottom: 8 },
+    modeIcon: { fontSize: 24, marginBottom: 8, opacity: 0.9 },
     modeLabel: {
         fontSize: 12,
         fontFamily: FONTS.bold,
