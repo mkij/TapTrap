@@ -29,6 +29,7 @@ export default function useGameLoop() {
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const recentRulesRef = useRef<string[]>([]);
     const recentCategoriesRef = useRef<string[]>([]);
+    const recentResultsRef = useRef<boolean[]>([]);
     const chapterRef = useRef<{ id: number; totalScreens: number; completed: number } | null>(null);
 
     const devModeRef = useRef<{
@@ -68,11 +69,25 @@ export default function useGameLoop() {
                 // Normal game: story mode or endless
                 const stageDef = getStageLevelDef(levelNumber);
                 newLevel = stageDef
-                    ? buildLevelFromStage(stageDef, levelNumber, currentState.memory.icon)
+                    ? buildLevelFromStage(
+                        stageDef,
+                        levelNumber,
+                        currentState.memory.icon,
+                        {
+                            combo: currentState.combo,
+                            recentErrors: recentResultsRef.current.filter((r) => !r).length,
+                            totalLevels: levelNumber,
+                        }
+                    )
                     : generateLevel(levelNumber, {
                         rememberedIcon: currentState.memory.icon,
                         recentRules: recentRulesRef.current,
                         recentCategories: recentCategoriesRef.current,
+                        performance: {
+                            combo: currentState.combo,
+                            recentErrors: recentResultsRef.current.filter((r) => !r).length,
+                            totalLevels: levelNumber,
+                        },
                     });
             }
 
@@ -183,6 +198,8 @@ export default function useGameLoop() {
                 rememberedIcon: updatedMemory.icon,
             };
 
+            recentResultsRef.current = [...recentResultsRef.current, true].slice(-5);
+
             // Check chapter completion
             console.log("CHAPTER REF:", JSON.stringify(chapterRef.current));
             if (chapterRef.current) {
@@ -207,6 +224,8 @@ export default function useGameLoop() {
     const handleFail = useCallback(() => {
         clearTimer();
         const newCombo = calculateCombo(state.combo, false);
+
+        recentResultsRef.current = [...recentResultsRef.current, false].slice(-5);
 
         setState((prev) => {
             const newLives = prev.lives - 1;
@@ -300,6 +319,7 @@ export default function useGameLoop() {
     const startChapter = useCallback((chapterId: number) => {
         console.log("START CHAPTER CALLED:", chapterId);
         recentRulesRef.current = [];
+        recentResultsRef.current = [];
         recentCategoriesRef.current = [];
         devModeRef.current = { active: false, category: null, screenType: null };
         chapterRef.current = {
@@ -320,6 +340,7 @@ export default function useGameLoop() {
     // Start endless mode (infinite run, no chapter tracking)
     const startEndless = useCallback(() => {
         recentRulesRef.current = [];
+        recentResultsRef.current = [];
         recentCategoriesRef.current = [];
         devModeRef.current = { active: false, category: null, screenType: null };
         chapterRef.current = null;
@@ -336,6 +357,7 @@ export default function useGameLoop() {
     // Start hardcore mode (1 life, shorter timers)
     const startHardcore = useCallback(() => {
         recentRulesRef.current = [];
+        recentResultsRef.current = [];
         recentCategoriesRef.current = [];
         devModeRef.current = { active: false, category: null, screenType: null };
         chapterRef.current = null;

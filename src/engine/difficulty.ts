@@ -6,6 +6,44 @@ export interface DifficultyConfig {
   maxDifficulty: 1 | 2 | 3;
 }
 
+export interface PerformanceContext {
+  combo: number;
+  recentErrors: number;   // errors in last 5 levels
+  totalLevels: number;
+}
+
+// Dynamic time adjustment based on player performance
+export function adjustTimeForPerformance(
+  baseTime: number,
+  perf: PerformanceContext | undefined
+): number {
+  if (!perf) return baseTime;
+
+  let time = baseTime;
+
+  // Player is doing well: shorten time
+  // -40ms per combo level, -80ms bonus every 5 combo
+  if (perf.combo > 0) {
+    time -= perf.combo * 40;
+    time -= Math.floor(perf.combo / 5) * 80;
+  }
+
+  // Player struggling: add rescue time
+  // 2+ errors in last 5 levels = +300ms for mercy
+  if (perf.recentErrors >= 2) {
+    time += 300;
+  }
+
+  // Clamp: never below 1400ms, never above baseTime + 500ms
+  return Math.max(1400, Math.min(time, baseTime + 500));
+}
+
+// Should this level be a simple/easy one? (rescue mechanic)
+export function shouldRescue(perf: PerformanceContext | undefined): boolean {
+  if (!perf) return false;
+  return perf.recentErrors >= 2;
+}
+
 export function getDifficultyConfig(levelNumber: number): DifficultyConfig {
   // Tier 1: levels 1-5 — basics only
   if (levelNumber <= 5) {

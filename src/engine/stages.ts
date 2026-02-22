@@ -1,4 +1,5 @@
 import { Level, ScreenType, RuleParams } from "./types";
+import { adjustTimeForPerformance, shouldRescue, PerformanceContext } from "./difficulty";
 
 // --- Stage level definition (what you write as designer) ---
 
@@ -97,16 +98,23 @@ function resolveStageParams(
 export function buildLevelFromStage(
   def: StageLevelDef,
   levelNumber: number,
-  rememberedIcon: string | null
+  rememberedIcon: string | null,
+  performance?: PerformanceContext
 ): Level {
   const { params, instruction } = resolveStageParams(def, rememberedIcon);
+  const baseTime = (def.timeLimit ?? 4.0) * 1000;
+  const adjustedTime = adjustTimeForPerformance(baseTime, performance);
+
+  if (performance) {
+    console.log(`[DIFFICULTY] base=${baseTime}ms → adjusted=${adjustedTime}ms | combo=${performance.combo} errors=${performance.recentErrors}/5`);
+  }
 
   return {
     id: levelNumber,
     instruction,
     rule: def.rule,
     params,
-    timeLimit: (def.timeLimit ?? 4.0) * 1000,
+    timeLimit: adjustedTime,
     screenType: def.screenType ?? "standard",
     difficulty: def.difficulty ?? 1,
     requiresMemory: def.requiresMemory,
@@ -199,7 +207,7 @@ export function getStageLevelDef(levelNumber: number): StageLevelDef | null {
   return ALL_STAGE_LEVELS[index];
 }
 
-// Get stage name for a level number
+// Get stage name for a level rt { Level, ScreenType, RuleParams } from "./ty
 export function getStageName(levelNumber: number): string | null {
   let count = 0;
   for (const stage of STAGES) {

@@ -1,5 +1,5 @@
 import { Level, LevelTemplate } from "./types";
-import { getDifficultyConfig } from "./difficulty";
+import { getDifficultyConfig, adjustTimeForPerformance, shouldRescue, PerformanceContext } from "./difficulty";
 
 const ICONS = ["bird", "star", "heart", "moon", "fire", "leaf"];
 
@@ -1624,9 +1624,11 @@ export function generateLevel(
     rememberedIcon?: string | null;
     recentRules?: string[];
     recentCategories?: string[];
+    performance?: PerformanceContext;
   }
 ): Level {
   const difficulty = getDifficultyConfig(levelNumber);
+  const rescue = shouldRescue(context?.performance);
 
   // Filter catalog by allowed categories and max difficulty
   const available = LEVEL_CATALOG.filter((t) => {
@@ -1661,6 +1663,14 @@ export function generateLevel(
     pool = filtered;
   }
 
+  // Rescue: prefer easy levels when player is struggling
+  if (rescue) {
+    const easyPool = pool.filter((t) => t.difficulty === 1);
+    if (easyPool.length > 0) {
+      pool = easyPool;
+    }
+  }
+
   const template = pickRandom(pool);
 
   const { params, instruction } = resolveParams(
@@ -1673,7 +1683,13 @@ export function generateLevel(
     instruction,
     rule: template.rule,
     params,
-    timeLimit: difficulty.baseTime,
+    timeLimit: (() => {
+      const adjusted = adjustTimeForPerformance(difficulty.baseTime, context?.performance);
+      if (context?.performance) {
+        console.log(`[DIFFICULTY] base=${difficulty.baseTime}ms → adjusted=${adjusted}ms | combo=${context.performance.combo} errors=${context.performance.recentErrors}/5 rescue=${rescue}`);
+      }
+      return adjusted;
+    })(),
     category: template.category,
     subCategory: template.subCategory,
     screenType: template.screenType,
