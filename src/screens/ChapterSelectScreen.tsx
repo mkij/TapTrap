@@ -421,7 +421,13 @@ export default function ChapterSelectScreen({
             visible={visible}
             animationType="slide"
             presentationStyle="fullScreen"
-            onRequestClose={onClose}
+            onRequestClose={() => {
+                if (selectedChapter) {
+                    setSelectedChapter(null);
+                } else {
+                    onClose();
+                }
+            }}
         >
             <View style={styles.container}>
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
