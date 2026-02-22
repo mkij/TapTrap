@@ -10,6 +10,14 @@ export interface PerformanceContext {
   combo: number;
   recentErrors: number;   // errors in last 5 levels
   totalLevels: number;
+  chapterId: number | null;
+  gameMode: "chapter" | "endless" | "hardcore";
+}
+
+// Chapter-based intensity: ch1=0, ch2=0.26, ch3=0.63, ch4+=1.0, endless=1.0
+function getDifficultyIntensity(chapterId: number | null): number {
+  if (chapterId === null) return 1.0;
+  return Math.min(1, ((chapterId - 1) / 3) ** 1.3);
 }
 
 // Dynamic time adjustment based on player performance
@@ -19,20 +27,26 @@ export function adjustTimeForPerformance(
 ): number {
   if (!perf) return baseTime;
 
-  let time = baseTime;
+  const intensity = getDifficultyIntensity(perf.chapterId);
+
+  // No dynamic difficulty at intensity 0 (chapter 1)
+  if (intensity === 0) return baseTime;
+
+  let adjustment = 0;
 
   // Player is doing well: shorten time
-  // -40ms per combo level, -80ms bonus every 5 combo
   if (perf.combo > 0) {
-    time -= perf.combo * 40;
-    time -= Math.floor(perf.combo / 5) * 80;
+    adjustment -= perf.combo * 40;
+    adjustment -= Math.floor(perf.combo / 5) * 80;
   }
 
   // Player struggling: add rescue time
-  // 2+ errors in last 5 levels = +300ms for mercy
   if (perf.recentErrors >= 2) {
-    time += 300;
+    adjustment += 300;
   }
+
+  // Scale adjustment by intensity
+  const time = baseTime + adjustment * intensity;
 
   // Clamp: never below 1400ms, never above baseTime + 500ms
   return Math.max(1400, Math.min(time, baseTime + 500));

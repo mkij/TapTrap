@@ -1,5 +1,5 @@
 import { Level, LevelTemplate } from "./types";
-import { getDifficultyConfig, adjustTimeForPerformance, shouldRescue, PerformanceContext } from "./difficulty";
+import { getDifficultyConfig, adjustTimeForPerformance, shouldRescue, isHardcoreWarmup, isHardcorePostWarmup, PerformanceContext } from "./difficulty";
 
 const ICONS = ["bird", "star", "heart", "moon", "fire", "leaf"];
 
@@ -1668,6 +1668,22 @@ export function generateLevel(
     const easyPool = pool.filter((t) => t.difficulty === 1);
     if (easyPool.length > 0) {
       pool = easyPool;
+    }
+  }
+
+  // Hardcore warmup: only easy levels, no mashups
+  if (isHardcoreWarmup(context?.performance)) {
+    const warmupPool = pool.filter((t) => t.difficulty === 1 && t.category !== "cumulative");
+    if (warmupPool.length > 0) {
+      pool = warmupPool;
+    }
+  }
+
+  // Hardcore post-warmup: skip basic tutorial screens (difficulty 1 basic)
+  if (isHardcorePostWarmup(context?.performance)) {
+    const hardPool = pool.filter((t) => !(t.category === "basic" && t.difficulty === 1));
+    if (hardPool.length > 0) {
+      pool = hardPool;
     }
   }
 

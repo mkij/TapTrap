@@ -30,6 +30,7 @@ export default function useGameLoop() {
     const recentRulesRef = useRef<string[]>([]);
     const recentCategoriesRef = useRef<string[]>([]);
     const recentResultsRef = useRef<boolean[]>([]);
+    const gameModeRef = useRef<"chapter" | "endless" | "hardcore">("chapter");
     const chapterRef = useRef<{ id: number; totalScreens: number; completed: number } | null>(null);
 
     const devModeRef = useRef<{
@@ -77,6 +78,8 @@ export default function useGameLoop() {
                             combo: currentState.combo,
                             recentErrors: recentResultsRef.current.filter((r) => !r).length,
                             totalLevels: levelNumber,
+                            chapterId: chapterRef.current?.id ?? null,
+                            gameMode: gameModeRef.current,
                         }
                     )
                     : generateLevel(levelNumber, {
@@ -87,6 +90,8 @@ export default function useGameLoop() {
                             combo: currentState.combo,
                             recentErrors: recentResultsRef.current.filter((r) => !r).length,
                             totalLevels: levelNumber,
+                            chapterId: chapterRef.current?.id ?? null,
+                            gameMode: gameModeRef.current,
                         },
                     });
             }
@@ -323,6 +328,7 @@ export default function useGameLoop() {
         recentResultsRef.current = [];
         recentCategoriesRef.current = [];
         devModeRef.current = { active: false, category: null, screenType: null };
+        gameModeRef.current = "chapter";
         chapterRef.current = {
             id: chapterId,
             totalScreens: CHAPTER_SCREENS[chapterId] ?? 10,
@@ -344,6 +350,7 @@ export default function useGameLoop() {
         recentResultsRef.current = [];
         recentCategoriesRef.current = [];
         devModeRef.current = { active: false, category: null, screenType: null };
+        gameModeRef.current = "endless";
         chapterRef.current = null;
         const freshState: GameState = {
             ...INITIAL_STATE,
@@ -361,6 +368,7 @@ export default function useGameLoop() {
         recentResultsRef.current = [];
         recentCategoriesRef.current = [];
         devModeRef.current = { active: false, category: null, screenType: null };
+        gameModeRef.current = "hardcore";
         chapterRef.current = null;
         const freshState: GameState = {
             ...INITIAL_STATE,
